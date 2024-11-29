@@ -56,7 +56,7 @@ _start:
 # @param CL 扇区数量
 # @param DI 保存数据的内存地址
 # 
-# FIXME: 数据过多可能会导致 DI 回环，覆盖其他区域的数据
+# FIXME: 数据过多可能会导致 DI 回环，覆盖其他区域的数据（由于尚未开启 A20 gata，若 es:di 超过 1MB 也会导致线性地址回环）
 # FIXME: 缺少寄存器状态保存与恢复
 # FIXME: 缺少硬盘 BSY 和 ERR 状态判断
 # FIXME: 缺少硬盘状态判断前的 400ns 延迟 https://wiki.osdev.org/ATA_PIO_Mode#400ns_delays

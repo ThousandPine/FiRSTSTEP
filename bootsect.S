@@ -1,4 +1,4 @@
-.equ SETUP_ADDR, 0x8000
+.equ SETUP_SEG, 0x0800 # 0x8000 对应的段是 0x0800
 
 .section .text
 .global _start
@@ -9,9 +9,10 @@ _start:
 
     # 初始化段寄存器
     xor    %ax, %ax
-    mov    %ax, %ds    # 数据段
-    mov    %ax, %ss    # 堆栈段
-    mov    %ax, %es    # 额外段
+    mov    %ax, %ds         # 数据段
+    mov    %ax, %ss         # 堆栈段
+    mov    $SETUP_SEG, %ax
+    mov    %ax, %es         # 额外段
 
     # 由于栈向低地址增长，所以设栈顶为程序起始处 (0x7c00)
     # 相当于把引导程序下方的空间作为栈
@@ -31,15 +32,15 @@ _start:
     # 最后，jmp 0x8001（跳过开头表示扇区数的那 1 字节）执行 setup 程序
     mov    $1, %ax
     mov    $1, %cl
-    mov    $SETUP_ADDR, %di
+    mov    $0, %di
     call   read_sectors
 
     mov    $1, %ax
-    mov    SETUP_ADDR, %cl  # 第一个字节表示扇区数量
-    mov    $SETUP_ADDR, %di
+    mov    0, %cl      # 0 表示段内地址，mov 使用 es 段寄存器，所以是 %es:0，也就是 0x8000
+    mov    $0, %di
     call   read_sectors
 
-    jmp    (SETUP_ADDR + 1) # 跳过开头表示扇区数量的 1 字节
+    jmp   (SETUP_SEG << 4 + 1) # 跳过开头表示扇区数量的 1 字节
 
 # ATA PIO 读取硬盘扇区 (16 位版本)
 # 使用 LBA28 寻址模式 
@@ -48,6 +49,7 @@ _start:
 # @param CL 扇区数量
 # @param DI 保存数据的内存地址
 # 
+# FIXME: 数据过多可能会导致 DI 回环，覆盖其他区域的数据
 # FIXME: 缺少寄存器状态保存与恢复
 # FIXME: 缺少硬盘 BSY 和 ERR 状态判断
 # FIXME: 缺少硬盘状态判断前的 400ns 延迟 https://wiki.osdev.org/ATA_PIO_Mode#400ns_delays

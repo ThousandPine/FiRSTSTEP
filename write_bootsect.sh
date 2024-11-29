@@ -33,4 +33,4 @@ dd if="$BIN_FILE" of="$DISK_IMAGE" bs=1 count=446 conv=notrunc status=none
 # 写入引导标志（最后两字节）
 echo -ne '\x55\xAA' | dd of="$DISK_IMAGE" bs=1 seek=510 conv=notrunc status=none
 
-echo "Bootsect code successfully written to MBR of '$DISK_IMAGE'."
+echo "'$BIN_FILE' successfully written to MBR of '$DISK_IMAGE'."

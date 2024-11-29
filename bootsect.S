@@ -18,7 +18,7 @@ _start:
     # 相当于把引导程序下方的空间作为栈
     mov    $_start, %sp
 
-    mov    $msg, %si   # SI 指向字符串起始地址
+    mov    $msg0, %si  # SI 指向字符串起始地址
     call   print       # 调用打印字符串子程序
 
     # 将保存在 MBR gap 的 setup 程序读取到 0x8000 处
@@ -35,10 +35,17 @@ _start:
     mov    $0, %di
     call   read_sectors
 
+    mov    $msg1, %si  # 打印 setup 加载信息
+    call   print
+    
+
     mov    $1, %ax
     mov    0, %cl      # 0 表示段内地址，mov 使用 es 段寄存器，所以是 %es:0，也就是 0x8000
     mov    $0, %di
     call   read_sectors
+
+    mov    $msg2, %si  # 打印 setup 加载完成信息
+    call   print
 
     jmp   (SETUP_SEG << 4 + 1) # 跳过开头表示扇区数量的 1 字节
 
@@ -113,8 +120,12 @@ print:
 .print_done:
     ret    
 
-msg:
+msg0:
     .asciz "Running bootsect ...\n\r"
+msg1:
+    .asciz "Loading setup ...\n\r"
+msg2:
+    .asciz "Setup is loaded.\n\r"
 
 # 填充到 446 字节上限
 .org 446

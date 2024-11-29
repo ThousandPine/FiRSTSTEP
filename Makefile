@@ -24,5 +24,8 @@ install: $(TARGET) $(IMG_NAME)
 qemu:
 	qemu-system-i386 -m 1G -nographic -drive format=raw,file=$(IMG_NAME)
 
+bochs:
+	bochs -f bochsrc.cfg -q
+
 clean:
 	rm -f $(TARGET)

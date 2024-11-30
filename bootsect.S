@@ -1,4 +1,4 @@
-.equ SETUP_SEG, 0x0800 # 0x8000 对应的段是 0x0800
+#include "boot.h"
 
 .section .text
 .global _start
@@ -47,7 +47,7 @@ _start:
     mov    $msg2, %si  # 打印 setup 加载完成信息
     call   print
 
-    jmp   (SETUP_SEG << 4 + 1) # 跳过开头表示扇区数量的 1 字节
+    ljmp   $SETUP_SEG, $0x0001 # 跳过开头表示扇区数量的 1 字节
 
 # ATA PIO 读取硬盘扇区 (16 位版本)
 # 使用 LBA28 寻址模式 

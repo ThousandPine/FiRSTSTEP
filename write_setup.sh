@@ -44,9 +44,11 @@ SECTOR_COUNT=$(( (BIN_SIZE + 511) / 512 ))
 if [ $SECTOR_COUNT -eq 0 ]; then
     echo "Error: Invalid sector count calculated as 0. Check '$BIN_FILE' size."
     exit 1
-elif [ $SECTOR_COUNT -gt 64 ]; then
-    echo "Error: '$BIN_FILE' occupies too many sectors ($SECTOR_COUNT). Maximum is 64."
+elif [ $SECTOR_COUNT -gt 256 ]; then
+    echo "Error: '$BIN_FILE' occupies too many sectors ($SECTOR_COUNT). Maximum is 256."
     exit 1
+elif [ $SECTOR_COUNT -eq 256 ]; then
+    SECTOR_COUNT=0 # 256 个扇区用值 0 表示
 fi
 
 # 将扇区数量写入 BIN_FILE 的首个字节

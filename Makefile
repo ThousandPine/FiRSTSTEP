@@ -1,7 +1,7 @@
 TARGET = bootsect.bin setup.bin
 CC = gcc
 IMG_NAME = disk.img
-IMG_SIZE = 64
+IMG_SIZE = 16
 
 all: $(TARGET)
 
@@ -15,7 +15,7 @@ setup.bin: setup.S
 
 $(IMG_NAME):
 	dd if=/dev/zero of=$(IMG_NAME) bs=1M count=$(IMG_SIZE)
-	parted -s $(IMG_NAME) mklabel msdos mkpart primary fat32 1MiB 100%
+	parted -s $(IMG_NAME) mklabel msdos mkpart primary fat16 1MiB 100%
 
 install: $(TARGET) $(IMG_NAME)
 	./write_bootsect.sh bootsect.bin $(IMG_NAME)

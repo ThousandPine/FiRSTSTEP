@@ -1,5 +1,3 @@
-#include "boot.h"
-
 .section .text
 .global _start
 
@@ -11,11 +9,6 @@
 
     _start:
     .code16
-
-    # 设置段地址为 0x0800
-    mov $SETUP_SEG, %ax
-    mov %ax, %ds
-    mov %ax, %es
 
     # 输出运行信息
     mov    $msg0, %si  # SI 指向字符串起始地址
@@ -75,5 +68,5 @@ protcseg:
 
     # 测试 A20 gate
 
-    # 读取活动分区的 FAT32 文件系统根目录
-    # 找到内核程序，并加载到 0x100000
+    # 读取活动分区的 FAT12 文件系统根目录
+    # 找到内核程序，并加载到 0x10000

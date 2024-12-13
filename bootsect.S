@@ -1,4 +1,4 @@
-#include "boot.h"
+#define SETUP_BASE 0x01000 // setup 内存位置
 
 .section .text
 .global _start
@@ -11,28 +11,26 @@ _start:
     xor    %ax, %ax
     mov    %ax, %ds         # 数据段
     mov    %ax, %ss         # 堆栈段
-    mov    $SETUP_SEG, %ax
     mov    %ax, %es         # 额外段
 
-    # 由于栈向低地址增长，所以设栈顶为程序起始处 (0x7c00)
-    # 相当于把引导程序下方的空间作为栈
-    mov    $_start, %sp
+    # 设置临时栈空间
+    mov    $0xFFFF, %sp
 
     mov    $msg0, %si  # SI 指向字符串起始地址
     call   print       # 调用打印字符串子程序
 
-    # 将保存在 MBR gap 的 setup 程序读取到 0x8000 处
+    # 将保存在 MBR gap 的 setup 程序读取到 0x1000 处
     # 程序开头 1 字节表示占用的扇区数
 
-    # 接下来要将 setup 程序读取到内存 0x8000 处
+    # 接下来要将 setup 程序读取到内存 0x1000 处
     # 程序保存硬盘第二扇区开始的连续空间中 (MBR gap)
     # 第二扇区开头的 1 字节表示程序占用的扇区数
     # 因此，我们先读取第二扇区，获取程序大小
-    # 接着，将对应数量的扇区读入 0x8000 之中
-    # 最后，jmp 0x8001（跳过开头表示扇区数的那 1 字节）执行 setup 程序
+    # 接着，将对应数量的扇区读入 0x1000 之中
+    # 最后，jmp 0x1001（跳过开头表示扇区数的那 1 字节）执行 setup 程序
     mov    $1, %ax
     mov    $1, %cl
-    mov    $0, %di
+    mov    $SETUP_BASE, %di
     call   read_sectors
 
     mov    $msg1, %si  # 打印 setup 加载信息
@@ -40,14 +38,14 @@ _start:
     
 
     mov    $1, %ax
-    mov    0, %cl      # 0 表示段内地址，mov 使用 es 段寄存器，所以是 %es:0，也就是 0x8000
-    mov    $0, %di
+    mov    SETUP_BASE, %cl      # 读取内存 0x1000 的数据
+    mov    $SETUP_BASE, %di
     call   read_sectors
 
     mov    $msg2, %si  # 打印 setup 加载完成信息
     call   print
 
-    ljmp   $SETUP_SEG, $0x0001 # 跳过开头表示扇区数量的 1 字节
+    jmp   (SETUP_BASE + 1) # 跳过开头表示扇区数量的 1 字节
 
 # ATA PIO 读取硬盘扇区 (16 位版本)
 # 使用 LBA28 寻址模式 

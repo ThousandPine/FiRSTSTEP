@@ -10,7 +10,7 @@ bootsect.bin: bootsect.S
 	objcopy -S -O binary -j .text $@ $@
 
 setup.bin: setup.S
-	$(CC) -m32 -nostdlib -nostartfiles -no-pie -Ttext=0x0 -o $@ $<
+	$(CC) -m32 -nostdlib -nostartfiles -no-pie -Ttext=0x1000 -o $@ $<
 	objcopy -S -O binary -j .text $@ $@
 
 $(IMG_NAME):

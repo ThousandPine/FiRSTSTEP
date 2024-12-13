@@ -1,3 +1,9 @@
+#include "mem.h"
+
+.set PROT_MODE_CSEG, 0x8         # 代码段选择子
+.set PROT_MODE_DSEG, 0x10        # 数据段选择子
+.set CR0_PE_ON,      0x1         # 保护模式启用标志位
+
 .section .text
 .global _start
 
@@ -26,10 +32,14 @@
     out     %al, $0x60   # 将启用 A20 对应的 bit 设为 1
     call    a20wait
 
-    # TODO: 开启保护模式
+    # 开启保护模式
+    lgdt    gdtrptr
+    mov     %cr0, %eax
+    or      $CR0_PE_ON, %eax
+    mov     %eax, %cr0
 
-    # FIXME: 跳转到 32 位代码
-    # ljmp    xxx, $protcseg
+    # 跳转到 32 位代码
+    ljmp    $PROT_MODE_CSEG, $protcseg
     hlt
 
 # 等待，直到键盘输入队列为空
@@ -60,13 +70,39 @@ print:
 msg0:
     .asciz "Running setup ...\n\r"
 
+###################
+# 32 位保护模式代码 #
+###################
     .code32
 protcseg:
-    # 设置段寄存器
+    # 初始化数据段寄存器
+    mov    $PROT_MODE_DSEG, %ax
+    mov    %ax, %ds
+    mov    %ax, %es
+    mov    %ax, %fs
+    mov    %ax, %gs
+    mov    %ax, %ss
 
-    # 设置堆栈
+    # TODO: 设置堆栈
 
-    # 测试 A20 gate
+    # TODO: 打印信息
 
+    # TODO: 测试 A20 gate
+
+    # TODO:
     # 读取活动分区的 FAT16 文件系统根目录
     # 找到内核程序，并加载到 0x10000
+
+    hlt
+
+# Bootloader GDT
+.align 4    # 4 字节对齐
+gdt:
+    SEG_NULL                                  # null seg
+    SEG_DESC(0x0, 0xFFFFF, DA_CR | DA_DPL0)   # 代码段
+    SEG_DESC(0x0, 0xFFFFF, DA_DRW | DA_DPL0)  # 数据段
+gdt_end:
+
+gdtrptr:
+    .word   gdt_end - gdt - 1       # sizeof(gdt) - 1
+    .long   gdt                     # address gdt

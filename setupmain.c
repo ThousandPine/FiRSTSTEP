@@ -1,19 +1,53 @@
 #include "x86.h"
+#include "mbr.h"
 
-#define SECTSIZE 512
+#define SECTSIZE 512            // 扇区大小为 512 字节
+#define MBR (((struct MBR *) 0x7C00))   // 指针类型转换，读取位于内存 0x7C00 的 MBR
 
-char *vmem = (char *)0xB8000;
-char vattr = 0x02; // 绿色字符
+char *vmem = (char *)0xB8000;   // 显存指针
+char vattr = 0x02;              // 默认显示绿色字符
 
 void putchar(char c);
 void puts(char *s);
+void putn(uint32_t n);
 void error(char *s);
 void waitdisk(void);
 void readsect(void *dst, uint32_t offset);
 
+void print_part(struct PartitionEntry const *part)
+{
+    puts(" start_lba:");
+    putn(part->start_lba);
+    puts(" num_sectors:");
+    putn(part->num_sectors);
+}
+
 void setupmain(void)
 {
     puts("In protected mode.");
+
+    struct PartitionEntry const * boot_part = NULL;
+
+    // 找到首个可引导分区
+    for (uint32_t i = 0; i < 4; i++)
+    {
+        if (MBR->partitions[i].boot_indicator == 0x80)
+        {
+            boot_part = &MBR->partitions[i];
+            break;
+        }
+    }
+
+    if (boot_part == NULL)
+    {
+        error("No bootable partition found");
+    }
+
+    print_part(boot_part);
+
+    // 寻找 kernel 程序
+
+
 
     puts("DONE.");
     while (1)
@@ -36,9 +70,25 @@ void puts(char *s)
     }
 }
 
+void putn(uint32_t n)
+{
+    uint32_t x = 0;
+    while (n)
+    {
+        x *= 10;
+        x += n % 10;
+        n /= 10;
+    }
+    while (x)
+    {
+        putchar((x % 10) + '0');
+        x /= 10;
+    }
+}
+
 void error(char *s)
 {
-    vattr = 0xC; // 高亮红色字符
+    vattr = 0xC; // 显示红色高亮字符
     puts(s);
     while (1)
         /* do nothing */;

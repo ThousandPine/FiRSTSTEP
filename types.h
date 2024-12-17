@@ -1,5 +1,7 @@
 #pragma once
 
+#define NULL ((void*) 0)
+
 typedef __signed char int8_t;
 typedef unsigned char uint8_t;
 typedef short int16_t;

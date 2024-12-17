@@ -1,17 +1,25 @@
 TARGET = bootsect.bin setup.bin
+LD = ld
 CC = gcc
+CFLAGS = -m32 -nostdlib -nostartfiles -fno-pie -fno-pic
 IMG_NAME = disk.img
 IMG_SIZE = 16
 
 all: $(TARGET)
 
 bootsect.bin: bootsect.S
-	$(CC) -m32 -nostdlib -nostartfiles -no-pie -Ttext=0x7C00 -o $@ $<
+	$(CC) $(CFLAGS) -Ttext=0x7C00 -o $@ $<
 	objcopy -S -O binary -j .text $@ $@
 
-setup.bin: setup.S
-	$(CC) -m32 -nostdlib -nostartfiles -no-pie -Ttext=0x1000 -o $@ $<
-	objcopy -S -O binary -j .text $@ $@
+setup.o: setup.S
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+setupmain.o: setupmain.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+setup.bin: setup.o setupmain.o
+	$(LD) -m elf_i386 -T link.ld -o $@ $^
+	objcopy -S -O binary $@ $@
 
 $(IMG_NAME):
 	dd if=/dev/zero of=$(IMG_NAME) bs=1M count=$(IMG_SIZE)
@@ -28,4 +36,4 @@ bochs:
 	bochs -f bochsrc.cfg -q
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) *.o

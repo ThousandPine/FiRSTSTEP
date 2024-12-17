@@ -85,6 +85,9 @@ protcseg:
 
     # TODO: 设置堆栈
 
+    # TODO: 跳入 C 函数
+    call   setupmain
+
     # TODO: 打印信息
 
     # TODO: 测试 A20 gate

@@ -24,6 +24,7 @@ setup.bin: setup.o setupmain.o
 $(IMG_NAME):
 	dd if=/dev/zero of=$(IMG_NAME) bs=1M count=$(IMG_SIZE)
 	parted -s $(IMG_NAME) mklabel msdos mkpart primary fat16 1MiB 100%
+	parted -s $(IMG_NAME) set 1 boot on
 
 install: $(TARGET) $(IMG_NAME)
 	./write_bootsect.sh bootsect.bin $(IMG_NAME)

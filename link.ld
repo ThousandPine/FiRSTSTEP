@@ -7,12 +7,14 @@ SECTIONS
         *(.text)
     }
 
-    /* 将 .data 段紧随 .text 段 */
     .data : {
         *(.data)
     }
 
-    /* 将 .bss 段紧随 .data 段，确保空间分配 */
+    .rodata : {
+        *(.rodata)
+    }
+
     .bss : {
         *(.bss)
     }

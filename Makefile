@@ -1,7 +1,7 @@
 TARGET = bootsect.bin setup.bin
 LD = ld
 CC = gcc
-CFLAGS = -m32 -nostdlib -nostartfiles -fno-pie -fno-pic
+CFLAGS = -m32 -nostdlib -nostartfiles -fno-builtin -fno-pie -fno-pic
 IMG_NAME = disk.img
 IMG_SIZE = 16
 

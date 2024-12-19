@@ -22,7 +22,7 @@ setup.bin: setup.o setupmain.o
 	objcopy -S -O binary $@ $@
 
 kernel: init.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $<
 
 $(IMG_NAME):
 	dd if=/dev/zero of=$(IMG_NAME) bs=1M count=$(IMG_SIZE)

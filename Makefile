@@ -1,7 +1,7 @@
 TARGET = bootsect.bin setup.bin kernel
 LD = ld
 CC = gcc
-CFLAGS = -m32 -nostdlib -nostartfiles -fno-builtin -fno-pie -fno-pic -march=i386
+CFLAGS = -m32 -nostdlib -nostartfiles -fno-builtin -fno-stack-protector -fno-pie -fno-pic -march=i386
 IMG_NAME = disk.img
 IMG_SIZE = 16
 
@@ -35,8 +35,16 @@ install: $(TARGET) $(IMG_NAME)
 	./write_setup.sh setup.bin $(IMG_NAME)
 	./install_kernel.sh kernel $(IMG_NAME)
 
+mount:
+	sudo losetup -P /dev/loop0 $(IMG_NAME)
+	sudo mount /dev/loop0p1 ./mnt --mkdir
+
+umount:
+	- sudo umount ./mnt            
+	- sudo losetup -d /dev/loop0
+
 qemu:
-	qemu-system-i386 -m 1G -nographic -drive format=raw,file=$(IMG_NAME)
+	qemu-system-i386 -m 1G -drive format=raw,file=$(IMG_NAME)
 
 bochs:
 	bochs -f bochsrc.cfg -q

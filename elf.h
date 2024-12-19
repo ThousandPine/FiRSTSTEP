@@ -7,7 +7,7 @@
 /**
  * ELF Header 32 bit version
  */
-struct ElfHdr
+struct ELFHeader
 {
     uint32_t e_magic; // 必须等于 ELF_MAGIC
     uint8_t e_ident[12];
@@ -27,9 +27,9 @@ struct ElfHdr
 } __attribute__((packed));
 
 /**
- * Program header 32 bit version
+ * Program Header 32 bit version
  */
-struct ProgHdr
+struct ProgramHeader
 {
     uint32_t p_type;
     uint32_t p_offset;

@@ -3,7 +3,7 @@
 #include "types.h"
 
 /**
- * BIOS Parameter Block
+ * FAT16 BIOS Parameter Block
  */
 struct BPB
 {
@@ -22,7 +22,7 @@ struct BPB
 } __attribute__((packed));
 
 /**
- * Extended BIOS Parameter Block
+ * FAT16 Extended BIOS Parameter Block
  */
 struct EBPB
 {
@@ -34,6 +34,9 @@ struct EBPB
     uint8_t fs_type[8];
 } __attribute__((packed));
 
+/**
+ * FAT16 分区的首个扇区
+ */
 struct FatBootSector
 {
     uint8_t jump_ins[3];
@@ -43,7 +46,7 @@ struct FatBootSector
 } __attribute__((packed));
 
 /**
- * DirectoryEntry
+ * FAT16 Directory Entry
  */
 struct FatDirEntry
 {

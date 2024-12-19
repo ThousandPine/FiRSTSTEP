@@ -2,7 +2,11 @@
 
 #include "types.h"
 
-// 定义单个分区表项结构
+#define MBR_BOOTABLE_FLAG 0x80  // 分区可引导标志
+
+/**
+ * MBR 单个分区信息结构
+ */
 struct PartitionEntry
 {
     uint8_t boot_indicator; // 引导标志，0x80 表示可引导，0x00 表示不可引导
@@ -13,7 +17,9 @@ struct PartitionEntry
     uint32_t num_sectors;   // 分区占用的扇区总数
 } __attribute__((packed));
 
-// 定义 MBR 结构
+/**
+ * MBR 分区表结构
+ */
 struct MBR
 {
     uint8_t boot_code[446];              // 引导代码区

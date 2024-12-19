@@ -1,9 +1,10 @@
 #include "x86.h"
 #include "mbr.h"
 #include "fat16.h"
+#include "elf.h"
 
-#define KERNEL_NAME "kernel"                // 内核文件名（长度不超过 8 字节）
-#define KERNEL_BASE_ADDR ((void *)0x100000) // 内核加载位置
+#define KERNEL_NAME "kernel"                // 内核 ELF 文件名（长度不超过 8 字节）
+#define ELF ((struct ElfHdr *)0x8000)       // 内核 ELF 加载位置
 #define SECTSIZE 512                        // 扇区大小为 512 字节
 #define MBR (((struct MBR *)0x7C00))        // 指针类型转换，读取位于内存 0x7C00 的 MBR
 #define BOOTABLE_FLAG 0x80                  // 引导分区标志
@@ -52,6 +53,22 @@ uint16_t next_clus(uint16_t cluster, uint32_t fat_fst_sec)
 uint8_t check_clus(uint16_t cluster)
 {
     return cluster > 0x1 && cluster < 0xFFF0;
+}
+
+void memcpy(void *dst, void *src, uint32_t size)
+{
+    while (size--)
+    {
+        *(uint8_t *)(dst++) = *(uint8_t *)(src++);
+    }
+}
+
+void memset(void *dst, uint8_t value, uint32_t size)
+{
+    while (size--)
+    {
+        *(uint8_t *)(dst++) = value;
+    }
 }
 
 void setupmain(void)
@@ -140,8 +157,9 @@ void setupmain(void)
         error(KERNEL_NOT_FOUND_ERROR_MSG);
     }
 
-    // 读取内核程序到指定内存地址
-    void *kernel_addr = KERNEL_BASE_ADDR;
+    // 读取内核 ELF 到指定内存地址
+    // FIXME: 防止覆盖到高位的映射内存
+    void *elf_load_ptr = ELF;
 
     for (uint16_t cluster = kernel_file_entry.fst_clus;
          check_clus(cluster);
@@ -150,19 +168,33 @@ void setupmain(void)
         uint32_t offset = data_clus_to_lba28(data_fst_sec, bpb.sec_per_clus, cluster);
         for (uint32_t i = 0; i < bpb.sec_per_clus; i++)
         {
-            readsect(kernel_addr, offset + i);
-            kernel_addr += SECTSIZE;
+            readsect(elf_load_ptr, offset + i);
+            elf_load_ptr += SECTSIZE;
         }
+    } 
+
+    if (ELF->e_magic != ELF_MAGIC)
+    {
+        error("The ELF header's magic number is incorrect.");
     }
 
-    // 使用内核 ELF 文件
+    // 根据 ELF 文件描述，加载程序各个段到指定内存位置
+    struct ProgHdr *prog_hdr = (struct ProgHdr *) ((void *) ELF + ELF->e_phoff);
 
-    vattr = 0xA; // 高亮绿色
-    puts("[#DONE#]");
-    while (1)
-        ;
-bad:
-    error("An error occurred during setup!");
+    for (uint32_t i = 0; i < ELF->e_phnum; i++, prog_hdr++)
+    {
+        // 将 ELF 文件中的程序段数据拷贝到内存中
+        memcpy((void *)prog_hdr->p_paddr, (void *)ELF + prog_hdr->p_offset, prog_hdr->p_filesz);
+
+        // p_memsz 表示段分配的内存空间，p_filesz 表示段在 ELF 文件中数据大小
+        // p_filesz < p_memsz 时，剩余的空间用 0 填充
+        memset((void *)prog_hdr->p_paddr + prog_hdr->p_filesz, 0x0, prog_hdr->p_memsz - prog_hdr->p_filesz);
+    }
+    
+    // 跳转到内核入口，不会再返回
+    ((void (*)(void)) (ELF->e_entry))();
+
+    error("The kernel should not return");
 }
 
 char toupper(char c)

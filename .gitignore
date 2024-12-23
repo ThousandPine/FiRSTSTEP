@@ -1,5 +1,7 @@
-/.vscode
-/logs
+/.vscode/
+/logs/
+**/obj/
 *.o
+*.d
 *.bin
 *.img

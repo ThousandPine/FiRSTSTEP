@@ -1,27 +1,27 @@
-TARGET = bootsect.bin setup.bin kernel
+TARGET = boot/bootsect.bin boot/setup.bin kernel/kernel
 LD = ld
 CC = gcc
-CFLAGS = -m32 -nostdlib -nostartfiles -fno-builtin -fno-stack-protector -fno-pie -fno-pic -march=i386
+CFLAGS = -I ./inc/ -m32 -nostdlib -nostartfiles -fno-builtin -fno-stack-protector -fno-pie -fno-pic -march=i386
 IMG_NAME = disk.img
 IMG_SIZE = 16
 
 all: $(TARGET)
 
-bootsect.bin: bootsect.S
+boot/bootsect.bin: boot/bootsect.S
 	$(CC) $(CFLAGS) -Ttext=0x7C00 -o $@ $<
 	objcopy -S -O binary -j .text $@ $@
 
-setup.o: setup.S
+boot/setup.o: boot/setup.S
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-setupmain.o: setupmain.c
+boot/setupmain.o: boot/setupmain.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-setup.bin: setup.o setupmain.o
-	$(LD) -m elf_i386 -T link.ld -o $@ $^
+boot/setup.bin: boot/setup.o boot/setupmain.o
+	$(LD) -m elf_i386 -T boot/link.ld -o $@ $^
 	objcopy -S -O binary $@ $@
 
-kernel: init.c
+kernel/kernel: kernel/init.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 $(IMG_NAME):
@@ -31,9 +31,9 @@ $(IMG_NAME):
 	mkfs.fat -F 16 --offset=2048 $(IMG_NAME)
 
 install: $(TARGET) $(IMG_NAME)
-	./write_bootsect.sh bootsect.bin $(IMG_NAME)
-	./write_setup.sh setup.bin $(IMG_NAME)
-	./install_kernel.sh kernel $(IMG_NAME)
+	boot/write_bootsect.sh boot/bootsect.bin $(IMG_NAME)
+	boot/write_setup.sh boot/setup.bin $(IMG_NAME)
+	kernel/install_kernel.sh kernel/kernel $(IMG_NAME)
 
 mount:
 	sudo losetup -P /dev/loop0 $(IMG_NAME)
@@ -50,4 +50,4 @@ bochs:
 	bochs -f bochsrc.cfg -q
 
 clean:
-	rm -f $(TARGET) *.o
+	rm -f $(TARGET) *.o ./**/*.o

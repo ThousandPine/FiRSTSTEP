@@ -21,7 +21,8 @@ if [ ! -f "$DISK_IMAGE" ]; then
 fi
 
 # 获取第一个分区的起始扇区
-START_SECTOR=$(fdisk -l "$DISK_IMAGE" | awk '/^'$DISK_IMAGE'/ {if ($2 == "*") print $3; else print $2; exit}')
+START_SECTOR=$(fdisk -l "$DISK_IMAGE" | awk -v disk_image=$DISK_IMAGE\
+                '$0 ~ "^" disk_image {if ($2 == "*") print $3; else print $2; exit}')
 # 计算 MBR gap 大小（字节）
 MBR_GAP_SIZE=$(( (START_SECTOR - 1) * 512 ))
 

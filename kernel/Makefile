@@ -33,7 +33,7 @@ $(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 kernel: $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -T link.ld -o $@ $^
 	./install_kernel.sh $@ $(IMG_PATH)
 
 # 引用生成的 .d 依赖文件，使其能够判断头文件依赖

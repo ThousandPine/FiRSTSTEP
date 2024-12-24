@@ -1,5 +1,5 @@
-/.vscode/
-/logs/
+.vscode/*
+!.vscode/launch.json
 **/obj/
 *.o
 *.d

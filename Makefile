@@ -1,5 +1,6 @@
-IMG_NAME = disk.img
-IMG_SIZE = 16
+IMG_NAME := disk.img
+IMG_SIZE := 16
+CFLAGS := -g
 
 all: boot kernel user lib
 
@@ -7,13 +8,13 @@ boot: $(IMG_NAME)
 	$(MAKE) -C boot IMG_PATH=../$(IMG_NAME)
 
 kernel: $(IMG_NAME) lib
-	$(MAKE) -C kernel IMG_PATH=../$(IMG_NAME)
+	$(MAKE) -C kernel IMG_PATH=../$(IMG_NAME) CFLAGS=$(CFLAGS)
 
 user: $(IMG_NAME) lib
-	$(MAKE) -C user IMG_PATH=../$(IMG_NAME)
+	$(MAKE) -C user IMG_PATH=../$(IMG_NAME) CFLAGS=$(CFLAGS)
 
 lib: $(IMG_NAME)
-	$(MAKE) -C lib IMG_PATH=../$(IMG_NAME)
+	$(MAKE) -C lib CFLAGS=$(CFLAGS)
 
 $(IMG_NAME):
 	dd if=/dev/zero of=$(IMG_NAME) bs=1M count=$(IMG_SIZE)
@@ -34,6 +35,9 @@ qemu:
 
 bochs:
 	bochs -f bochsrc.cfg -q
+
+bochs-gdb:
+	bochs-gdb -f bochsrc.gdb -q
 
 clean:
 	$(MAKE) -C boot clean

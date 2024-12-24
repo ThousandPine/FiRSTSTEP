@@ -83,18 +83,11 @@ protcseg:
     mov    %ax, %gs
     mov    %ax, %ss
 
-    # TODO: 设置堆栈
+    # 设置栈顶指针
+    mov    $0x1000, %sp
 
-    # TODO: 跳入 C 函数
+    # 跳入 C 函数
     call   setupmain
-
-    # TODO: 打印信息
-
-    # TODO: 测试 A20 gate
-
-    # TODO:
-    # 读取活动分区的 FAT16 文件系统根目录
-    # 找到内核程序，并加载到 0x10000
 
     hlt
 

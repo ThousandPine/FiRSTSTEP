@@ -1,5 +1,7 @@
 /* 内核测试代码 */
 
+#include "string.h"
+
 char *vmem = (char *)0xB8000;   // 显存指针
 
 void putchar(char c);
@@ -8,6 +10,9 @@ void puts(char *s);
 void setupmain(void)
 {
     puts("In Kernel Init!!!");
+
+    strlen("123");
+
     while(1);
 }
 

@@ -1,4 +1,5 @@
 /* 用户程序测试代码 */
+#include "string.h"
 
 char *vmem = (char *)0xB8000;   // 显存指针
 
@@ -8,6 +9,7 @@ void puts(char *s);
 void main(void)
 {
     puts("Hello World!!!");
+    strlen("123");
     while(1);
 }
 

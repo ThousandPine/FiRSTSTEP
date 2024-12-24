@@ -1,16 +1,19 @@
 IMG_NAME = disk.img
 IMG_SIZE = 16
 
-all: boot kernel user
+all: boot kernel user lib
 
 boot: $(IMG_NAME)
 	$(MAKE) -C boot IMG_PATH=../$(IMG_NAME)
 
-kernel: $(IMG_NAME)
+kernel: $(IMG_NAME) lib
 	$(MAKE) -C kernel IMG_PATH=../$(IMG_NAME)
 
-user: $(IMG_NAME)
+user: $(IMG_NAME) lib
 	$(MAKE) -C user IMG_PATH=../$(IMG_NAME)
+
+lib: $(IMG_NAME)
+	$(MAKE) -C lib IMG_PATH=../$(IMG_NAME)
 
 $(IMG_NAME):
 	dd if=/dev/zero of=$(IMG_NAME) bs=1M count=$(IMG_SIZE)
@@ -36,5 +39,6 @@ clean:
 	$(MAKE) -C boot clean
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user clean
+	$(MAKE) -C lib clean
 
-.PHONY: boot kernel user
+.PHONY: boot kernel user lib

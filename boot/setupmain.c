@@ -7,6 +7,7 @@
 #define ELF ((struct ELFHeader *)0x8000)                    // 内核 ELF 加载位置
 #define SECTSIZE 512                                        // 扇区大小为 512 字节
 #define MBR (((struct MBR *)0x7C00))                        // 指针类型转换，读取位于内存 0x7C00 的 MBR
+#define HW_MAP_START_ADDR 0xA0000                           // 前 1MB 可用地址上界，0xA0000 ~ 0xFFFFF 是硬件映射空间
 #define TOUPPER(x) (x + ('A' - 'a') * (x > 'a' && x < 'z')) // 字符转换为大写
 
 char buffer[SECTSIZE];        // 临时存储区
@@ -143,8 +144,12 @@ void setupmain(void)
         uint32_t offset = data_clus_to_lba28(data_fst_sec, bpb.sec_per_clus, cluster);
         for (uint32_t i = 0; i < bpb.sec_per_clus; i++)
         {
+            // 防止写入到硬件映射内存
+            if (elf_load_ptr + SECTSIZE - 1 >= HW_MAP_START_ADDR)
+            {
+                error("Cannot write to hardware mapped address");
+            }
             readsect(elf_load_ptr, offset + i);
-            // FIXME: 防止覆盖到高位的映射内存
             elf_load_ptr += SECTSIZE;
         }
     }

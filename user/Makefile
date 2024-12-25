@@ -1,4 +1,4 @@
-OBJDIR := ./obj
+OBJDIR := ../obj/user
 TARGET := hello.out
 
 LD := ld

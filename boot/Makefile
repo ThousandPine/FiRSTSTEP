@@ -1,4 +1,4 @@
-OBJDIR := ./obj
+OBJDIR := ../obj/boot
 TARGET := bootsect.bin setup.bin
 
 LD := ld

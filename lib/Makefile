@@ -1,4 +1,4 @@
-OBJDIR := ./obj
+OBJDIR := ../obj/lib
 TARGET := libmylib.a
 
 CC := gcc

@@ -1,4 +1,4 @@
-OBJDIR := ./obj
+OBJDIR := ../obj/kernel
 TARGET := kernel
 
 LD := ld

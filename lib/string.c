@@ -3,8 +3,10 @@
 size_t strlen(const char *str)
 {
     size_t i = 0;
-    while (str[i++])
-        ;
+    while (str[i])
+    {
+        i++;
+    }
     return i;
 }
 
@@ -25,7 +27,7 @@ int strncmp(const char *str1, const char *str2, size_t n)
         return 0; // 比较 0 个字符时，总是相等
     }
 
-    while (n-- && *str1 && (*str1 == *str2))
+    while (--n && *str1 && (*str1 == *str2))
     {
         str1++;
         str2++;
@@ -106,8 +108,14 @@ char *strncat(char *dest, const char *src, size_t n)
 
 int memcmp(const void *s1, const void *s2, size_t n)
 {
+    if (n == 0)
+    {
+        return 0; // 比较 0 个字符时，总是相等
+    }
+
     const uint8_t *p1 = s1, *p2 = s2;
-    while (n-- && *p1 == *p2)
+    
+    while (--n && *p1 == *p2)
     {
         p1++, p2++;
     }

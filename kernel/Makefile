@@ -28,6 +28,7 @@ LDFLAGS := -m elf_i386 			# 指定生成 32 位 ELF 格式的可执行文件，�
 LDFLAGS += -T link.ld  			# 使用 link.ld 链接脚本
 LDFLAGS += -L $(LIBDIR)  		# 指定静态链接库所在目录为 ../lib
 LDFLAGS += -l :$(LIBNAME)  		# 指定静态链接库名称，使用文件全名要加冒号 : ，格式参考 ld 的 -l 参数说明
+LDFLAGS += -e main				# 指定程序入口为 main 函数，否则会使用第一个函数作为入口
 # 上面的注释对齐带上了很多空格，要用 strip 去除多余空格
 LDFLAGS := $(strip ${LDFLAGS})
 

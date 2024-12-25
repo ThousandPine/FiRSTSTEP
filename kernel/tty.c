@@ -22,6 +22,7 @@
 
 #define CGA_BASE_ADDR 0xB8000            // 显卡 CGA 模式内存起始位置
 #define CGA_MEM_SIZE (0xC0000 - 0xB8000) // 显卡 CGA 模式内存大小
+#define BLANK 0x0720                     // 默认填充字符，要有前景色才能显示光标（黑色前景会导致光标变黑不可见）
 
 /**
  * 描述 tty 信息的结构体
@@ -67,9 +68,16 @@ static void set_cursor(void)
     outb(CRTC_DATA_REG, ((tty.cursor)) & 0xff);
 }
 
-static void tty_erase(void)
+// 用空白字符填充显存
+static void vmem_reset(void)
 {
-    memset((void *)tty.vmem_base + CGA_BASE_ADDR, 0, tty.vmem_size);
+    uint16_t *p = (uint16_t *)((uint8_t *)CGA_BASE_ADDR + tty.vmem_base);
+    uint16_t *p_end = (uint16_t *)((uint8_t *)CGA_BASE_ADDR + tty.vmem_base + tty.vmem_size);
+
+    while (p < p_end)
+    {
+        *p++ = BLANK;
+    }
 }
 
 void tty_clear(void)
@@ -77,7 +85,7 @@ void tty_clear(void)
     tty.screen = tty.vmem_base >> 1;
     tty.cursor = tty.vmem_base >> 1;
 
-    tty_erase();
+    vmem_reset();
     set_screen();
     set_cursor();
 }

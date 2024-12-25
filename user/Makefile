@@ -1,5 +1,7 @@
 OBJDIR := ../obj/user
 TARGET := hello.out
+LIBDIR := ../lib
+LIBNAME := libmylib.a
 
 LD := ld
 CC := gcc
@@ -23,8 +25,8 @@ override CFLAGS := $(strip ${CFLAGS})
 
 LDFLAGS := -m elf_i386 			# 指定生成 32 位 ELF 格式的可执行文件，适用于 i386 架构
 LDFLAGS += -T link.ld  			# 使用 link.ld 链接脚本
-LDFLAGS += -L ../lib  			# 指定静态链接库所在目录为 ../lib
-LDFLAGS += -l mylib  			# 指定静态链接库名称，去除前缀的 lib 和 .a 后缀，格式参考 ld 的 -l 参数说明
+LDFLAGS += -L $(LIBDIR)  		# 指定静态链接库所在目录为 ../lib
+LDFLAGS += -l :$(LIBNAME)  		# 指定静态链接库名称，使用文件全名要加冒号 : ，格式参考 ld 的 -l 参数说明
 # 上面的注释对齐带上了很多空格，要用 strip 去除多余空格
 LDFLAGS := $(strip ${LDFLAGS})
 
@@ -38,11 +40,11 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(TARGET): $(OBJ)
+$(TARGET): $(OBJ) $(LIBDIR)/$(LIBNAME)
 # 链接用户程序
 # 此处将 $(LDFLAGS) 后置是为了让 -l 指定的库文件出现在 $(OBJ) 文件之后（右侧），否则会编译出错
 # 这与链接器从左到右依次解析符号的顺序有关，要让链接器先分析完 $(OBJ) 中缺失的符号，然后再从库文件链接需要的内容
-	$(LD) -o $@ $^ $(LDFLAGS)
+	$(LD) -o $@ $(OBJ) $(LDFLAGS)
 # 使用脚本安装用户文件到磁盘中
 	./install_user.sh $@ $(IMG_PATH)
 

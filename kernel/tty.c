@@ -1,0 +1,91 @@
+#include "types.h"
+#include "string.h"
+#include "x86.h"
+
+/**
+ * CRT Controller (CRTC) Registers
+ *
+ * CRTC 包括了多个寄存器，出于节约端口的目的
+ * 访问某个寄存器时，需要先向索引寄存器端口（0x3D4）写入目标寄存器索引
+ * 然后通过数据寄存器端口（0x3D5）读写寄存器数据
+ *
+ * ref: http://www.osdever.net/FreeVGA/vga/crtcreg.htm
+ */
+#define CRTC_ADDR_REG 0x3D4 // CRTC 索引寄存器
+#define CRTC_DATA_REG 0x3D5 // CRTC 数据寄存器
+
+// CRTC 寄存索引值
+#define CRTC_START_ADDR_H 0xC // 显示内存起始位置 - 高位
+#define CRTC_START_ADDR_L 0xD // 显示内存起始位置 - 低位
+#define CRTC_CURSOR_H 0xE     // 光标位置 - 高位
+#define CRTC_CURSOR_L 0xF     // 光标位置 - 低位
+
+#define CGA_BASE_ADDR 0xB8000            // 显卡 CGA 模式内存起始位置
+#define CGA_MEM_SIZE (0xC0000 - 0xB8000) // 显卡 CGA 模式内存大小
+
+/**
+ * 描述 tty 信息的结构体
+ *
+ * 由于目前只需要单个 tty 因此定义为静态全局变量
+ */
+static struct
+{
+    uint32_t vmem_base; // 在显存中的基地址，必须是 2 的倍数
+                        // 不是在内存中的地址，而是相对于显存映射区域的地址，也就是在显存内部的偏移
+    uint32_t vmem_size; // 显存大小上限
+    uint32_t screen;    // 显示内容起始地址，参考 set_screen 函数说明
+    uint32_t cursor;    // 光标位置，参考 set_cursor 函数说明
+} tty;
+
+/**
+ * 通过修改 CRTC 起始地址寄存器（Start Address Register）设置显示内容
+ *
+ * “起始地址”是相对于显存的地址，也就是从 0x0 算起的，而不是映射地址的 0xB8000
+ * 而且不需要额外跳过字符的属性位，表示的就是整个字符（包括 ASCII 和属性位）的序号
+ *
+ * 比如有 3 个字符位于内存 0xB8000, 0xB8002, 0xB8004 ，对应的寄存器值就是 0, 1, 2
+ * 并不是 0, 2, 4 或 0xB8000, 0xB8002, 0xB8004
+ */
+static void set_screen(void)
+{
+    outb(CRTC_ADDR_REG, CRTC_START_ADDR_H);
+    outb(CRTC_DATA_REG, (tty.screen >> 8) & 0xff);
+    outb(CRTC_ADDR_REG, CRTC_START_ADDR_L);
+    outb(CRTC_DATA_REG, (tty.screen) & 0xff);
+}
+
+/**
+ * 修改 CRTC 光标位置寄存器（Cursor Location Register）
+ *
+ * 与“起始地址寄存器”性质相同，使用相对于显存的地址，不需要额外跳过字符属性位
+ */
+static void set_cursor(void)
+{
+    outb(CRTC_ADDR_REG, CRTC_CURSOR_H); // 光标高地址
+    outb(CRTC_DATA_REG, ((tty.cursor) >> 8) & 0xff);
+    outb(CRTC_ADDR_REG, CRTC_CURSOR_L); // 光标低地址
+    outb(CRTC_DATA_REG, ((tty.cursor)) & 0xff);
+}
+
+static void tty_erase(void)
+{
+    memset((void *)tty.vmem_base + CGA_BASE_ADDR, 0, tty.vmem_size);
+}
+
+void tty_clear(void)
+{
+    tty.screen = tty.vmem_base >> 1;
+    tty.cursor = tty.vmem_base >> 1;
+
+    tty_erase();
+    set_screen();
+    set_cursor();
+}
+
+void tty_init(void)
+{
+    tty.vmem_base = 0; // 必须是 2 的倍数
+    tty.vmem_size = CGA_MEM_SIZE;
+
+    tty_clear();
+}

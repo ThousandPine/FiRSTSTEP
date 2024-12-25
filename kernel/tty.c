@@ -22,7 +22,20 @@
 
 #define CGA_BASE_ADDR 0xB8000            // 显卡 CGA 模式内存起始位置
 #define CGA_MEM_SIZE (0xC0000 - 0xB8000) // 显卡 CGA 模式内存大小
-#define BLANK 0x0720                     // 默认填充字符，要有前景色才能显示光标（黑色前景会导致光标变黑不可见）
+#define WIDTH 80
+#define HIGHT 25
+#define BLANK 0x0700 // 默认填充字符，要有前景色才能显示光标（黑色前景会导致光标变黑不可见）
+
+// ASCII 控制字符
+#define ASCII_NUL 0x00
+#define ASCII_ESC 0x1B
+#define ASCII_LF 0x0A  // \n 换行，一般会有回车效果
+#define ASCII_CR 0x0D  // \r 回车
+#define ASCII_BS 0x08  // \b 仅退格，不删除字符
+#define ASCII_DEL 0x7F // 删除
+#define ASCII_HT 0x09  // \t 水平制表符
+#define ASCII_VT 0x0B  // \v 垂直制表符
+#define ASCII_FF 0x0C  // \f 换页
 
 /**
  * 描述 tty 信息的结构体
@@ -36,6 +49,7 @@ static struct
     uint32_t vmem_size; // 显存大小上限
     uint32_t screen;    // 显示内容起始地址，参考 set_screen 函数说明
     uint32_t cursor;    // 光标位置，参考 set_cursor 函数说明
+    uint8_t attr;       // 字符属性
 } tty;
 
 /**
@@ -69,7 +83,7 @@ static void set_cursor(void)
 }
 
 // 用空白字符填充显存
-static void vmem_reset(void)
+static void reset_vmem(void)
 {
     uint16_t *p = (uint16_t *)((uint8_t *)CGA_BASE_ADDR + tty.vmem_base);
     uint16_t *p_end = (uint16_t *)((uint8_t *)CGA_BASE_ADDR + tty.vmem_base + tty.vmem_size);
@@ -80,12 +94,80 @@ static void vmem_reset(void)
     }
 }
 
+// 设置光标所在位置的字符内容
+static inline void set_char(char c)
+{
+    uint8_t *p = (uint8_t *)(CGA_BASE_ADDR + (tty.cursor << 1));
+    *p++ = c;
+    *p = tty.attr;
+}
+
+/**
+ * 向 tty 写入信息
+ *
+ * 严格来说 tty 应该以设备的形式存在，该函数则是以设备的接口的形式暴露
+ * 但是目前还没有实现设备的功能，所以暂时直接对外暴露该函数
+ *
+ * TODO: 实现更多 ASCII 控制字符功能
+ * FIXME: 处理达到显存上限的情况
+ *
+ * @return 返回实际写入数量
+ */
+int tty_write(const char *buf, size_t n)
+{
+    size_t i = 0;
+    for (; i < n; i++)
+    {
+        char c = *buf++;
+        switch (c)
+        {
+        case ASCII_NUL:
+            break;
+        case ASCII_LF:
+            // 包括回车和换行两个动作
+            tty.cursor += WIDTH;
+            tty.cursor -= tty.cursor % WIDTH;
+            break;
+        case ASCII_CR:
+            tty.cursor -= tty.cursor % WIDTH;
+            break;
+        case ASCII_BS:
+            // 最多退格到行首
+            tty.cursor -= !!(tty.cursor % WIDTH);
+            break;
+        case ASCII_DEL:
+            tty.cursor--;
+            set_char(BLANK);
+            break;
+
+        default:
+            set_char(c);
+            tty.cursor++;
+            break;
+        }
+    }
+
+    // 光标在屏幕外时滚屏
+    while (tty.cursor >= tty.screen + WIDTH * HIGHT)
+    {
+        tty.screen += WIDTH;
+    }
+    while (tty.cursor < tty.screen)
+    {
+        tty.screen -= WIDTH;
+    }
+
+    set_cursor();
+    set_screen();
+    return i;
+}
+
 void tty_clear(void)
 {
     tty.screen = tty.vmem_base >> 1;
     tty.cursor = tty.vmem_base >> 1;
 
-    vmem_reset();
+    reset_vmem();
     set_screen();
     set_cursor();
 }
@@ -94,6 +176,7 @@ void tty_init(void)
 {
     tty.vmem_base = 0; // 必须是 2 的倍数
     tty.vmem_size = CGA_MEM_SIZE;
+    tty.attr = 0x07; // 白色字符
 
     tty_clear();
 }

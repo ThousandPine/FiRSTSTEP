@@ -2,16 +2,13 @@ IMG_NAME := disk.img
 IMG_SIZE := 16
 CFLAGS := -g
 
-all: boot kernel user lib
+all: boot kernel lib
 
 boot: $(IMG_NAME)
 	$(MAKE) -C boot IMG_PATH=../$(IMG_NAME)
 
 kernel: $(IMG_NAME) lib
 	$(MAKE) -C kernel IMG_PATH=../$(IMG_NAME) CFLAGS=$(CFLAGS)
-
-user: $(IMG_NAME) lib
-	$(MAKE) -C user IMG_PATH=../$(IMG_NAME) CFLAGS=$(CFLAGS)
 
 lib: $(IMG_NAME)
 	$(MAKE) -C lib CFLAGS=$(CFLAGS)
@@ -42,7 +39,6 @@ bochs-gdb:
 clean:
 	$(MAKE) -C boot clean
 	$(MAKE) -C kernel clean
-	$(MAKE) -C user clean
 	$(MAKE) -C lib clean
 
-.PHONY: boot kernel user lib
+.PHONY: boot kernel lib

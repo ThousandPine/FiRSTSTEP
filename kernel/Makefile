@@ -1,5 +1,5 @@
 OBJDIR := ../obj/kernel
-TARGET := kernel
+TARGET := $(OBJDIR)/kernel
 LIBDIR := ../lib
 LIBNAME := libmylib.a
 
@@ -43,7 +43,7 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-kernel: $(OBJ) $(LIBDIR)/$(LIBNAME)
+$(TARGET): $(OBJ) $(LIBDIR)/$(LIBNAME)
 # 链接内核程序
 # 此处将 $(LDFLAGS) 后置是为了让 -l 指定的库文件出现在 $(OBJ) 文件之后（右侧），否则会编译出错
 # 这与链接器从左到右依次解析符号的顺序有关，要让链接器先分析完 $(OBJ) 中缺失的符号，然后再从库文件链接需要的内容

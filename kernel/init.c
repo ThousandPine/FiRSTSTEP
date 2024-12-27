@@ -1,6 +1,6 @@
 /* 内核测试代码 */
-#include "tty.h"
-#include "kernel.h"
+#include "kernel/tty.h"
+#include "kernel/kernel.h"
 
 int main(void)
 {

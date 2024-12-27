@@ -1,4 +1,4 @@
-#include "tty.h"
+#include "kernel/tty.h"
 #include "stdio.h"
 
 int vprintk(const char *fmt, va_list args)

@@ -1,7 +1,7 @@
-#include "x86.h"
-#include "mbr.h"
-#include "fat16.h"
-#include "elf.h"
+#include "kernel/x86.h"
+#include "kernel/mbr.h"
+#include "kernel/fat16.h"
+#include "kernel/elf.h"
 
 #define KERNEL_NAME "kernel"                                // 内核 ELF 文件名（长度不超过 8 字节）
 #define ELF ((struct ELFHeader *)0x8000)                    // 内核 ELF 加载位置

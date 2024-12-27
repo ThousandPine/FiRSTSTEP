@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 static void spin(const char *s)
 {

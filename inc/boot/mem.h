@@ -1,3 +1,5 @@
+#pragma once
+
 // Descriptor Access Byte
 #define DA_P    0x80 // 有效段
 #define DA_A    0x01 // 访问位

@@ -1,6 +1,6 @@
 #include "types.h"
 #include "string.h"
-#include "x86.h"
+#include "kernel/x86.h"
 
 /**
  * CRT Controller (CRTC) Registers

@@ -1,4 +1,4 @@
-#include "mem.h"
+#include "boot/mem.h"
 
 .set PROT_MODE_CSEG, 0x8         # 代码段选择子
 .set PROT_MODE_DSEG, 0x10        # 数据段选择子

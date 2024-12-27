@@ -1,6 +1,8 @@
 IMG_NAME := disk.img
 IMG_SIZE := 16
+
 CFLAGS := -g
+CFLAGS += -DDEBUG
 
 all: boot kernel lib
 
@@ -8,10 +10,10 @@ boot: $(IMG_NAME)
 	$(MAKE) -C boot IMG_PATH=../$(IMG_NAME)
 
 kernel: $(IMG_NAME) lib
-	$(MAKE) -C kernel IMG_PATH=../$(IMG_NAME) CFLAGS=$(CFLAGS)
+	$(MAKE) -C kernel IMG_PATH=../$(IMG_NAME) CFLAGS="$(CFLAGS)"
 
 lib: $(IMG_NAME)
-	$(MAKE) -C lib CFLAGS=$(CFLAGS)
+	$(MAKE) -C lib CFLAGS="$(CFLAGS)"
 
 $(IMG_NAME):
 	dd if=/dev/zero of=$(IMG_NAME) bs=1M count=$(IMG_SIZE)

@@ -39,3 +39,18 @@ void panic(const char *fmt, ...)
 
     spin("panic()");
 }
+
+/**
+ * @warning 不能在终端初始化前使用
+ * @warning 不能在 print 相关函数中调用，否则会引发递归
+ */
+void debug_print(const char *file, int line, const char *fmt, ...)
+{
+    printk("[%s] [%d] ", file, line);
+
+    va_list args = va_start(fmt);
+    vprintk(fmt, args);
+    va_end(args);
+
+    printk("\n");
+}

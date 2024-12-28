@@ -2,6 +2,8 @@
 
 #include "varg.h"
 
+#define BMB __asm__ volatile("xchgw %bx, %bx");
+
 #define assert(exp)                                 \
     if (!(exp))                                     \
     {                                               \

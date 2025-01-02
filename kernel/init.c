@@ -2,6 +2,8 @@
 #include "kernel/tty.h"
 #include "kernel/kernel.h"
 
+void mem_init(void);
+
 static char stack[2048]; // 内核栈空间
 
 /**
@@ -32,6 +34,8 @@ int main(void)
     stack_init(stack + sizeof(stack));
 
     tty_init();
+
+    mem_init();
 
     // 内核不能 return，并且返回地址已经在初始化栈时丢失了
     while (1)

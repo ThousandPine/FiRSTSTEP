@@ -1,8 +1,7 @@
 #include "kernel/kernel.h"
 
-static void spin(const char *s)
+static void spin(void)
 {
-    printk("Spinning in %s ...\n", s);
     while (1)
         ;
 }
@@ -14,13 +13,13 @@ static void spin(const char *s)
 void assertion_failed(const char *exp, const char *file, const char *base, int line)
 {
     printk(
-        "\n###### ERROR ######\n"
+        "\n################ ERROR ################\n"
         "assert(%s) failed\n"
         "file: %s:%d\n"
-        "base: %s\n"
-        "###################\n",
+        "base: %s"
+        "\n#######################################\n",
         exp, file, line, base);
-    spin("assertion_failed()");
+    spin();
 }
 
 /**
@@ -29,15 +28,15 @@ void assertion_failed(const char *exp, const char *file, const char *base, int l
  */
 void panic(const char *fmt, ...)
 {
-    printk("\n###### PANIC ######\n");
+    printk("\n################ PANIC ################\n");
 
     va_list args = va_start(fmt);
     vprintk(fmt, args);
     va_end(args);
 
-    printk("\n###################\n");
+    printk("\n#######################################\n");
 
-    spin("panic()");
+    spin();
 }
 
 /**

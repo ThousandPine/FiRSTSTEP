@@ -1,7 +1,6 @@
-/* 内核测试代码 */
-#include "kernel/tty.h"
 #include "kernel/kernel.h"
 
+void tty_init(void);
 void mem_init(void);
 
 static char stack[2048]; // 内核栈空间
@@ -26,6 +25,5 @@ int main(void)
     mem_init();
 
     // 内核不能 return，并且返回地址已经在初始化栈时丢失了
-    while (1)
-        ;
+    panic("The kernel runs to the end");
 }

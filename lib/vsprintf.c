@@ -294,7 +294,7 @@ int vsprintf(char *buf, const char *fmt, va_list args)
         case 'p':
             flags |= SPEC;                                             // 默认输出 0x 前缀
             precision = precision ? precision : (sizeof(void *) << 1); // 默认精度为指针位宽
-            num = (uint64_t)va_arg(args, void *);
+            num = (uint32_t)va_arg(args, void *);
             len += number(buf + len, num, 16, flags, field_width, precision);
             break;
 

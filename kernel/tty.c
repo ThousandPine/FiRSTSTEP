@@ -24,7 +24,8 @@
 #define CGA_MEM_SIZE (0xC0000 - 0xB8000) // 显卡 CGA 模式内存大小
 #define WIDTH 80
 #define HIGHT 25
-#define BLANK 0x0700 // 默认填充字符，要有前景色才能显示光标（黑色前景会导致光标变黑不可见）
+#define BLANK 0x00 // 默认填充字符
+#define ATTR 0x07  // 默认字符属性，要有前景色才能显示光标（黑色前景会导致光标变黑不可见）
 
 // ASCII 控制字符
 #define ASCII_NUL 0x00
@@ -85,12 +86,13 @@ static void set_cursor(void)
 // 用空白字符填充显存
 static void reset_vmem(void)
 {
-    uint16_t *p = (uint16_t *)((uint8_t *)CGA_BASE_ADDR + tty.vmem_base);
-    uint16_t *p_end = (uint16_t *)((uint8_t *)CGA_BASE_ADDR + tty.vmem_base + tty.vmem_size);
+    uint8_t *p = (uint8_t *)CGA_BASE_ADDR + tty.vmem_base;
+    uint8_t *p_end = (uint8_t *)CGA_BASE_ADDR + tty.vmem_base + tty.vmem_size;
 
     while (p < p_end)
     {
         *p++ = BLANK;
+        *p++ = ATTR;
     }
 }
 

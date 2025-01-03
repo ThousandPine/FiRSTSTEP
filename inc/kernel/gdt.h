@@ -51,3 +51,5 @@ struct GDTDescriptor
  * @param ti 0 表示 GDT，1 表示 LDT
  */
 #define seg_sel_val(index, rpl, ti) (uint16_t)(((rpl) & 0x3) | (((ti) << 2) & 0x4) | (((index) << 3) & 0xFFF8))
+
+void gdt_init(void);

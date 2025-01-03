@@ -1,7 +1,6 @@
 #include "varg.h"
 
 #define is_dight(x) ((x) >= '0' && (x) <= '9')
-#define max(a, b) ((a) > (b) ? (a) : (b))
 
 #define LEFT (1 << 0)    // 字段宽度内左对齐
 #define PLUS (1 << 1)    // 正数显示加号
@@ -251,7 +250,8 @@ int vsprintf(char *buf, const char *fmt, va_list args)
             else if (*fmt == '*')
             {
                 fmt++;
-                precision = max(0, va_arg(args, int));
+                precision = va_arg(args, int);
+                precision = precision > 0 ? precision : 0;
             }
         }
 

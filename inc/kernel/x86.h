@@ -36,7 +36,7 @@ static inline void outb(uint16_t port, uint8_t value)
 static inline uint32_t get_cr0(void)
 {
     uint32_t value;
-    asm volatile("mov %%cr0, %0" : : "r"(value));
+    asm volatile("mov %%cr0, %0" : "=r"(value));
     return value;
 }
 
@@ -48,7 +48,7 @@ static inline void set_cr0(uint32_t value)
 static inline uint32_t get_cr3(void)
 {
     uint32_t value;
-    asm volatile("mov %%cr3, %0" : : "r"(value));
+    asm volatile("mov %%cr3, %0" : "=r"(value));
     return value;
 }
 

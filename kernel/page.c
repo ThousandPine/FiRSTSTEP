@@ -1,4 +1,5 @@
 #include "kernel/page.h"
+#include "kernel/pagemgr.h"
 #include "kernel/kernel.h"
 #include "kernel/x86.h"
 
@@ -54,7 +55,7 @@ void page_init()
     for (int i = 0; i < PT_COUNT; i++)
     {
         assert(((uint32_t)&pgtabels[i] & 0xFFF) == 0); // 页表地址 4 KiB 对齐
-        
+
         /**
          * 设置页目录条目，转换为整数直接赋值结构体
          * 高 20 位是页表地址的高 20 位，所以直接将地址按位与 0xFFFFF000
@@ -78,5 +79,6 @@ void page_init()
     set_cr3((uint32_t)pgdir);
     set_cr0(get_cr0() | CR0_PG);
 
-    // TODO: 初始化空闲页记录
+    // 添加内核保留空间以上的内存到空闲页面记录
+    pagemgr_add_record(KERNEL_MEM_BASE + KERNEL_MEM_SIZE, (mem_size - KERNEL_MEM_SIZE - KERNEL_MEM_BASE) / PAGE_SIZE);
 }

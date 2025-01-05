@@ -1,6 +1,7 @@
 .vscode/*
 !.vscode/launch.json
 bochsout.txt
+bx_enh_dbg.ini
 **/obj/
 *.o
 *.d

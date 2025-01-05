@@ -9,6 +9,6 @@ typedef struct page_node
     struct page_node *next;
 } page_node;
 
-void pagemgr_add_record(uint32_t addr, size_t count);
-page_node *pagemgr_alloc(size_t count);
-void pagemgr_free(page_node *node);
+void pmu_add_record(uint32_t addr, size_t count);
+page_node *pmu_alloc_pages(size_t count);
+void pmu_free_pages(page_node *node);

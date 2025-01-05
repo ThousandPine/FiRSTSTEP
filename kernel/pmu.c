@@ -1,4 +1,4 @@
-#include "kernel/pagemgr.h"
+#include "kernel/pmu.h"
 #include "kernel/page.h"
 #include "kernel/kernel.h"
 #include "kernel/x86.h"
@@ -12,7 +12,7 @@ static struct
 {
     size_t count;
     page_node *head;
-} pagemgr = {.count = 0, .head = NULL};
+} pmu = {.count = 0, .head = NULL};
 
 // 检查位图中的某一位是否为 1
 static inline int is_bit_set(int index)
@@ -64,23 +64,23 @@ static void free_node(struct page_node *node)
 }
 
 // 添加空闲页记录
-void pagemgr_add_record(uint32_t addr, size_t count)
+void pmu_add_record(uint32_t addr, size_t count)
 {
     DEBUGK("Add page free record: addr = %p, count = %u", addr, count);
 
     assert(count != 0);          // 数量不得为 0
     assert((addr & 0xFFF) == 0); // 地址 4 KiB 对齐
 
-    pagemgr.count += count;
+    pmu.count += count;
 
-    if (pagemgr.head == NULL)
+    if (pmu.head == NULL)
     {
-        pagemgr.head = alloc_node(addr, count);
+        pmu.head = alloc_node(addr, count);
         return;
     }
 
     // 找到插位置的前/后节点，第一个地址比 addr 大的节点为后置节点
-    page_node *p = NULL, *p_pre = NULL, *p_next = pagemgr.head;
+    page_node *p = NULL, *p_pre = NULL, *p_next = pmu.head;
     while (p_next != NULL && addr > p_next->addr)
     {
         p_pre = p_next;
@@ -107,7 +107,7 @@ void pagemgr_add_record(uint32_t addr, size_t count)
         p->next = p_next;
         if (p_pre == NULL)
         {
-            pagemgr.head = p;
+            pmu.head = p;
         }
         else
         {
@@ -130,18 +130,18 @@ void pagemgr_add_record(uint32_t addr, size_t count)
  * @return 内存页列表，可能包括多个节点,内存不足时返回 NULL;
  *         请保存该链表，用于后续释放。
  */
-page_node *pagemgr_alloc(size_t count)
+page_node *pmu_alloc_pages(size_t count)
 {
-    if (pagemgr.count < count)
+    if (pmu.count < count)
     {
         return NULL;
     }
 
     // 当前头节点就是结果链表的头节点
-    page_node *result = pagemgr.head;
+    page_node *result = pmu.head;
 
     // 从第一个节点开始累加，找到满足 count 数量的最后一个节点
-    page_node *p = pagemgr.head;
+    page_node *p = pmu.head;
     size_t sum = p->count;
     while (sum < count)
     {
@@ -160,8 +160,8 @@ page_node *pagemgr_alloc(size_t count)
     if (surplus > 0)
     {
         // 创建新节点保存节点中多余的页面，并作为新的头节点
-        pagemgr.head = alloc_node(p->addr + require * PAGE_SIZE, surplus);
-        pagemgr.head->next = p->next;
+        pmu.head = alloc_node(p->addr + require * PAGE_SIZE, surplus);
+        pmu.head->next = p->next;
         // 取走的节点则只保留需要的数量
         p->count = require;
     }
@@ -169,7 +169,7 @@ page_node *pagemgr_alloc(size_t count)
     else
     {
         // 则将下一个节点当作新的头节点
-        pagemgr.head = p->next;
+        pmu.head = p->next;
     }
     // 断开与原链表的连接
     p->next = NULL;
@@ -180,9 +180,9 @@ page_node *pagemgr_alloc(size_t count)
 /**
  * 将链表与其中记录的页面设置为空闲
  *
- * @param node 链表需要来自 pagemgr_alloc 的返回值
+ * @param node 链表需要来自 pmu_alloc_pages 的返回值
  */
-void pagemgr_free(page_node *node)
+void pmu_free_pages(page_node *node)
 {
     while (node != NULL)
     {
@@ -190,8 +190,8 @@ void pagemgr_free(page_node *node)
         size_t count = node->count;
         page_node *next = node->next;
 
-        free_node(node);                 // 释放节点
-        pagemgr_add_record(addr, count); // 添加空闲页记录
+        free_node(node);             // 释放节点
+        pmu_add_record(addr, count); // 添加空闲页记录
         node = next;
     }
 }

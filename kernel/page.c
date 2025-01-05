@@ -1,5 +1,5 @@
 #include "kernel/page.h"
-#include "kernel/pagemgr.h"
+#include "kernel/pmu.h"
 #include "kernel/kernel.h"
 #include "kernel/x86.h"
 
@@ -80,5 +80,5 @@ void page_init()
     set_cr0(get_cr0() | CR0_PG);
 
     // 添加内核保留空间以上的内存到空闲页面记录
-    pagemgr_add_record(KERNEL_MEM_BASE + KERNEL_MEM_SIZE, (mem_size - KERNEL_MEM_SIZE - KERNEL_MEM_BASE) / PAGE_SIZE);
+    pmu_add_record(KERNEL_MEM_BASE + KERNEL_MEM_SIZE, (mem_size - KERNEL_MEM_SIZE - KERNEL_MEM_BASE) / PAGE_SIZE);
 }

@@ -5,12 +5,18 @@ void mem_init(void);
 
 static char stack[2048]; // 内核栈空间
 
-int main(void)
+extern uint32_t kernel_addr_start, kernel_addr_end;
+
+int main(uint32_t kernel_start, uint32_t kernel_end)
 {
+    // 初始化栈会导致参数丢失，所以先记录到全局变量中
+    kernel_addr_start = kernel_start;
+    kernel_addr_end = kernel_end;
+
     /**
      * 初始化内核栈
      * 修改栈顶寄存器 esp 使其指向变量 stack 的空间
-     * 
+     *
      * 局部变量存储在栈空间
      * 所以初始化栈之前不得定义任何局部变量
      */

@@ -2,6 +2,7 @@
 #include "kernel/mbr.h"
 #include "kernel/fat16.h"
 #include "kernel/elf.h"
+#include "algobase.h"
 
 #define KERNEL_NAME "kernel"                                // 内核 ELF 文件名（长度不超过 8 字节）
 #define ELF ((struct ELFHeader *)0x8000)                    // 内核 ELF 加载位置
@@ -29,7 +30,7 @@ void setupmain(void)
 
     /**
      * 测试 A20 gate
-     * 
+     *
      * A20 gate 未启用会导致地址第 20 位（从 0 开始数）始终为 0
      * 比如地址 0x123456 会变成 0x023456，也就是说 A20 gate 未启用时这两个地址是等价的
      * 判断的方法，就是向这两个地址写入不同的数据，然后再读取数据判断是否不同
@@ -181,9 +182,19 @@ void setupmain(void)
      * 最后跳转到 ELF 记录的入口地址执行内核
      */
     struct ProgramHeader *prog = (struct ProgramHeader *)((void *)ELF + ELF->e_phoff);
+    uint32_t kernel_start = __UINT32_MAX__, kernel_end = 0;
 
     for (uint32_t i = 0; i < ELF->e_phnum; i++, prog++)
     {
+        if (prog->p_memsz == 0)
+        {
+            continue;
+        }
+        
+        // 记录内核区域的内存范围
+        kernel_start = MIN(kernel_start, prog->p_paddr);
+        kernel_end = MAX(kernel_end, prog->p_paddr + prog->p_memsz);
+
         // 将 ELF 文件中的段数据拷贝到内存中
         memcpy((void *)prog->p_paddr, (void *)ELF + prog->p_offset, prog->p_filesz);
 
@@ -193,7 +204,7 @@ void setupmain(void)
     }
 
     // 跳转到内核入口，不会返回
-    ((void (*)(void))(ELF->e_entry))();
+    ((void (*)(uint32_t, uint32_t))(ELF->e_entry))(kernel_start, kernel_end);
 
     error("The kernel should not return");
 }

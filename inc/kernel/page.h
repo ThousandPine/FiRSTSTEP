@@ -33,5 +33,3 @@ typedef struct PageTabelEntry
     uint8_t avl : 3;      // 保留字段
     uint32_t addr : 20;
 } __attribute__((packed)) PageTabelEntry;
-
-void page_init(void);

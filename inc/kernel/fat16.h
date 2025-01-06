@@ -50,7 +50,8 @@ typedef struct FatBootSector
  */
 typedef struct FatDirEntry
 {
-    uint8_t name[11];
+    uint8_t name[8];
+    uint8_t ext[3];
     uint8_t attr;
     uint8_t NT_res;
     uint8_t crt_time_tenth;
@@ -63,3 +64,13 @@ typedef struct FatDirEntry
     uint16_t fst_clus;
     uint32_t file_size;
 } __attribute__((packed)) FatDirEntry;
+
+// FAT Directory Entry File Attributes
+#define FAT_ATTR_READ_ONLY 0x01 // 只读
+#define FAT_ATTR_HIDDEN 0x02    // 隐藏
+#define FAT_ATTR_SYSTEM 0x04    // 系统
+#define FAT_ATTR_VOLUME_ID 0x08 // 卷标
+#define FAT_ATTR_DIRECTORY 0x10 // 子目录
+#define FAT_ATTR_ARCHIVE 0x20   // 档案
+#define FAT_ATTR_DEVICE 0x40    // 设备（内部使用）
+#define FAT_ATTR_UNUSED 0x80    // 未使用

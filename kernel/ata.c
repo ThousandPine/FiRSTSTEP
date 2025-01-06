@@ -85,7 +85,7 @@ static int ata_data_ready(void)
  * @param lba LBA 48 起始地址，以扇区为单位
  * @param count 扇区数量，0 表示 65536 个扇区
  */
-int ata_read(void *dst, uint64_t lba, uint16_t count)
+int ata_read(void *dst, lba_t lba, uint16_t count)
 {
     // 检查是否超出 LBA48 的范围
     assert(lba < 0xFFFFFFFFFFFFULL);
@@ -154,7 +154,7 @@ int ata_read(void *dst, uint64_t lba, uint16_t count)
  * @param lba LBA 48 起始地址，以扇区为单位
  * @param count 扇区数量，0 表示 65536 个扇区
  */
-int ata_write(const void *src, uint64_t lba, uint16_t count)
+int ata_write(const void *src, lba_t lba, uint16_t count)
 {
     // 检查是否超出 LBA48 的范围
     assert(lba < 0xFFFFFFFFFFFFULL);

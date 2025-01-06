@@ -49,5 +49,7 @@
 #define ATA_ER_TK0NF 0x02 // Track 0 not found
 #define ATA_ER_AMNF 0x01  // No address mark
 
-int ata_read(void *dst, uint64_t lba, uint16_t count);
-int ata_write(const void *src, uint64_t lba, uint16_t count);
+typedef uint64_t lba_t;
+
+int ata_read(void *dst, lba_t lba, uint16_t count);
+int ata_write(const void *src, lba_t lba, uint16_t count);

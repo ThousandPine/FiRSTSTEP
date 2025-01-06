@@ -1,9 +1,9 @@
 #include "kernel/gdt.h"
 #include "string.h"
 
-static struct SegmentDescriptor gdt[GDT_ENTRY_COUNT];
+static SegmentDescriptor gdt[GDT_ENTRY_COUNT];
 
-static void set_gdt_entry(struct SegmentDescriptor *desc, uint32_t base, uint32_t limit, uint8_t dpl, uint8_t type)
+static void set_gdt_entry(SegmentDescriptor *desc, uint32_t base, uint32_t limit, uint8_t dpl, uint8_t type)
 {
     desc->base_low = base & 0xFFFFFF;
     desc->base_hi = (base >> 24) & 0xFF;
@@ -27,7 +27,7 @@ void gdt_init(void)
     set_gdt_entry(gdt + USER_DATA_INDEX, 0, 0xFFFFF, 3, DA_DRW); // User Data Segment
 
     // Set GDTR
-    struct GDTDescriptor gdtr = {
+    GDTDescriptor gdtr = {
         .size = sizeof(gdt) - 1,
         .offset = (uint32_t)gdt,
     };

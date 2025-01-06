@@ -5,7 +5,7 @@
 /**
  * FAT16 BIOS Parameter Block
  */
-struct BPB
+typedef struct BPB
 {
     uint16_t byte_per_sec;
     uint8_t sec_per_clus;
@@ -19,12 +19,12 @@ struct BPB
     uint16_t num_heads;
     uint32_t hidd_sec;
     uint32_t tot_sec_32;
-} __attribute__((packed));
+} __attribute__((packed)) BPB;
 
 /**
  * FAT16 Extended BIOS Parameter Block
  */
-struct EBPB
+typedef struct EBPB
 {
     uint8_t drv_num;
     uint8_t reserved_1;
@@ -32,23 +32,23 @@ struct EBPB
     uint32_t vol_id;
     uint8_t vol_lab[11];
     uint8_t fs_type[8];
-} __attribute__((packed));
+} __attribute__((packed)) EBPB;
 
 /**
  * FAT16 分区的首个扇区
  */
-struct FatBootSector
+typedef struct FatBootSector
 {
     uint8_t jump_ins[3];
     uint8_t OEM[8];
-    struct BPB bpb;
-    struct EBPB ebpb;
-} __attribute__((packed));
+    BPB bpb;
+    EBPB ebpb;
+} __attribute__((packed)) FatBootSector;
 
 /**
  * FAT16 Directory Entry
  */
-struct FatDirEntry
+typedef struct FatDirEntry
 {
     uint8_t name[11];
     uint8_t attr;
@@ -62,4 +62,4 @@ struct FatDirEntry
     uint16_t wrt_date;
     uint16_t fst_clus;
     uint32_t file_size;
-} __attribute__((packed));
+} __attribute__((packed)) FatDirEntry;

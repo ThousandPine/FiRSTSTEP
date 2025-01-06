@@ -16,7 +16,7 @@
 #define DA_CCR 0b1111 // 可读一致代码段
 
 // 段描述符，作为 GDT 或 LDT 的条目
-struct SegmentDescriptor
+typedef struct SegmentDescriptor
 {
     uint16_t lim_low;
     uint32_t base_low : 24;
@@ -30,14 +30,14 @@ struct SegmentDescriptor
     uint8_t m32 : 1;         // 32 位标志
     uint8_t granularity : 1; // 启用 4KB 粒度地址
     uint8_t base_hi;
-} __attribute__((packed));
+} __attribute__((packed)) SegmentDescriptor;
 
 // 存储在 GDTR 中的数据，描述 GDT 的大小和起始位置
-struct GDTDescriptor
+typedef struct GDTDescriptor
 {
     uint16_t size;   // 等于 GDT 的字节大小减去 1。因为 size 的最大值为 65535，而 GDT 的长度最多为 65536 字节（8192 个条目）
     uint32_t offset; // GDT的线性地址（不是物理地址，适用分页地址转换）
-} __attribute__((packed));
+} __attribute__((packed)) GDTDescriptor;
 
 /**
  * 段选择子是（Segment Selector）存储在段寄存器中的数据

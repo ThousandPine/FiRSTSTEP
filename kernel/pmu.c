@@ -51,7 +51,7 @@ static page_node *alloc_node(uint32_t addr, size_t count)
 }
 
 // 释放链表节点
-static void free_node(struct page_node *node)
+static void free_node(page_node *node)
 {
     // 判断节点是否属于 node_buf
     assert(node >= node_buf);

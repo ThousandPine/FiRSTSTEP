@@ -5,9 +5,9 @@
 #include "algobase.h"
 
 #define KERNEL_NAME "kernel"                                // 内核 ELF 文件名（长度不超过 8 字节）
-#define ELF ((struct ELFHeader *)0x8000)                    // 内核 ELF 加载位置
+#define ELF ((ELFHeader *)0x8000)                    // 内核 ELF 加载位置
 #define SECTSIZE 512                                        // 扇区大小为 512 字节
-#define MBR (((struct MBR *)0x7C00))                        // 指针类型转换，读取位于内存 0x7C00 的 MBR
+#define MBR (((MBR *)0x7C00))                        // 指针类型转换，读取位于内存 0x7C00 的 MBR
 #define HW_MAP_START_ADDR 0xA0000                           // 前 1MB 可用地址上界，0xA0000 ~ 0xFFFFF 是硬件映射空间
 #define TOUPPER(x) (x + ('A' - 'a') * (x > 'a' && x < 'z')) // 字符转换为大写
 
@@ -48,7 +48,7 @@ void setupmain(void)
      * MBR 已经被读取到了 0x7C00，因此我们只需要将其转换为 MBR 结构体指针
      * 接着遍历 MBR 分区信息，找到首个可引导分区
      */
-    struct PartitionEntry boot_part = {.boot_indicator = 0};
+    PartitionEntry boot_part = {.boot_indicator = 0};
 
     // 遍历分区表，找到首个可引导分区
     for (uint32_t i = 0; i < 4; i++)
@@ -73,8 +73,8 @@ void setupmain(void)
      * 然后验证文件系统类型是否为 FAT16
      */
     readsect(buffer, boot_part.start_lba);
-    struct BPB bpb = ((struct FatBootSector *)buffer)->bpb;
-    struct EBPB ebpb = ((struct FatBootSector *)buffer)->ebpb;
+    BPB bpb = ((FatBootSector *)buffer)->bpb;
+    EBPB ebpb = ((FatBootSector *)buffer)->ebpb;
 
     // 判断是否为 FAT16
     for (uint32_t i = 0; i < 5; i++)
@@ -96,12 +96,12 @@ void setupmain(void)
     // 计算 FAT16 各区域起始扇区（相对硬盘起始位置）
     uint32_t const fat_fst_sec = boot_part.start_lba + bpb.rsvd_sec_cnt;                                     // FAT 表起始扇区
     uint32_t const root_fst_sec = fat_fst_sec + (bpb.num_fats * bpb.sec_per_fat_16);                         // 根目录起始扇区
-    uint32_t const root_sec_cnt = (bpb.root_ent_cnt * sizeof(struct FatDirEntry) + SECTSIZE - 1) / SECTSIZE; // 根目录占用扇区数量（向上取整）
+    uint32_t const root_sec_cnt = (bpb.root_ent_cnt * sizeof(FatDirEntry) + SECTSIZE - 1) / SECTSIZE; // 根目录占用扇区数量（向上取整）
     uint32_t const data_fst_sec = root_fst_sec + root_sec_cnt;                                               // 数据区起始扇区
 
     // 搜索对应的根目录下的内核文件条目
     uint8_t is_found = 0;
-    struct FatDirEntry kernel_file_entry;
+    FatDirEntry kernel_file_entry;
 
     for (uint32_t sec_i = 0, entry_i = 0;
          sec_i < root_sec_cnt && !is_found;
@@ -109,9 +109,9 @@ void setupmain(void)
     {
         readsect(buffer, root_fst_sec + sec_i);
 
-        struct FatDirEntry const *entry = (struct FatDirEntry *)buffer;
+        FatDirEntry const *entry = (FatDirEntry *)buffer;
 
-        for (int32_t lim = SECTSIZE / sizeof(struct FatDirEntry); // 防止超过 buffer 边界
+        for (int32_t lim = SECTSIZE / sizeof(FatDirEntry); // 防止超过 buffer 边界
              lim-- > 0 && entry_i < bpb.root_ent_cnt && !is_found;
              entry_i++, entry++)
         {
@@ -181,7 +181,7 @@ void setupmain(void)
      * 接下来要根据 ELF 文件描述，加载程序各个段到指定内存位置
      * 最后跳转到 ELF 记录的入口地址执行内核
      */
-    struct ProgramHeader *prog = (struct ProgramHeader *)((void *)ELF + ELF->e_phoff);
+    ProgramHeader *prog = (ProgramHeader *)((void *)ELF + ELF->e_phoff);
     uint32_t kernel_start = __UINT32_MAX__, kernel_end = 0;
 
     for (uint32_t i = 0; i < ELF->e_phnum; i++, prog++)
@@ -190,7 +190,7 @@ void setupmain(void)
         {
             continue;
         }
-        
+
         // 记录内核区域的内存范围
         kernel_start = MIN(kernel_start, prog->p_paddr);
         kernel_end = MAX(kernel_end, prog->p_paddr + prog->p_memsz);

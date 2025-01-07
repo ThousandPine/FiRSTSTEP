@@ -285,6 +285,10 @@ static int fat_find_entry(const char *path, FatDirEntry *out_entry)
  */
 int file_open(const char *path, File *out_file)
 {
+    if (path == NULL || out_file == NULL)
+    {
+        return -1;
+    }
     return fat_find_entry(path, &out_file->fat_entry);
 }
 
@@ -384,6 +388,11 @@ static int fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *ent
  */
 size_t file_read(void *dst, off_t offset, size_t size, File *file)
 {
+    if (dst == NULL || file == NULL)
+    {
+        return 0;
+    }
+
     // 不能超过文件上限
     if (offset >= file->fat_entry.file_size)
     {

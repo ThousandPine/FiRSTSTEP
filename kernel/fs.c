@@ -295,9 +295,9 @@ int file_open(const char *path, File *out_file)
  * @param offset 偏移字节，必须是扇区大小的整数倍
  * @param size 读取字节数，必须是扇区大小的整数倍
  * @param entry 文件条目
- * @return 实际读取的字节数
+ * @return 读取结果，0 成功，-1 失败
  */
-static size_t fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *entry)
+static int fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *entry)
 {
     assert(offset % SECT_SIZE == 0);
     assert(size % SECT_SIZE == 0);
@@ -318,7 +318,8 @@ static size_t fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *
 
     if (!fat_check_clus(cur_clus))
     {
-        return read_bytes;
+        DEBUGK("warning: failed to find cluster number");
+        return -1;
     }
 
     // 读取起始簇，要跳过簇内偏移的扇区
@@ -326,7 +327,7 @@ static size_t fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *
     size_t read_size = MIN(clus_size - offset, size);
     if (0 > ata_read(dst + read_bytes, lba, read_size / SECT_SIZE))
     {
-        return read_bytes;
+        return -1;
     }
     read_bytes += read_size;
 
@@ -337,13 +338,15 @@ static size_t fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *
         cur_clus = fat_next_clus(cur_clus);
         if (!fat_check_clus(cur_clus))
         {
-            return read_bytes;
+            DEBUGK("warning: failed to find cluster number");
+            return -1;
         }
         // 读取整个簇
         lba = fat_clus2lba(cur_clus);
         if (0 > ata_read(dst + read_bytes, lba, clus_size / SECT_SIZE))
         {
-            return read_bytes;
+            DEBUGK("warning: failed to read disk");
+            return -1;
         }
         read_bytes += clus_size;
     }
@@ -354,18 +357,20 @@ static size_t fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *
         cur_clus = fat_next_clus(cur_clus);
         if (!fat_check_clus(cur_clus))
         {
-            return read_bytes;
+            DEBUGK("warning: failed to find cluster number");
+            return -1;
         }
         lba = fat_clus2lba(cur_clus);
         read_size = size - read_bytes;
         if (0 > ata_read(dst + read_bytes, lba, read_size / SECT_SIZE))
         {
-            return read_bytes;
+            DEBUGK("warning: failed to read disk");
+            return -1;
         }
         read_bytes += read_size;
     }
 
-    return read_bytes;
+    return 0;
 }
 
 /**
@@ -404,8 +409,7 @@ size_t file_read(void *dst, off_t offset, size_t size, File *file)
         size_t read_size = MIN(size, SECT_SIZE - sec_off); // 该扇区内要读取的数据大小
 
         // 先读入临时缓冲区
-        size_t result = fat_read(buf, offset - sec_off, SECT_SIZE, &file->fat_entry);
-        if (result < SECT_SIZE)
+        if (0 > fat_read(buf, offset - sec_off, SECT_SIZE, &file->fat_entry))
         {
             return read_bytes;
         }
@@ -420,10 +424,9 @@ size_t file_read(void *dst, off_t offset, size_t size, File *file)
     {
         size_t read_size = ALIGN_DOWN(size - read_bytes, SECT_SIZE);
 
-        size_t result = fat_read(dst + read_bytes, offset + read_bytes, read_size, &file->fat_entry);
-        if (result < read_size)
+        if (0 > fat_read(dst + read_bytes, offset + read_bytes, read_size, &file->fat_entry))
         {
-            return read_bytes + result;
+            return read_bytes;
         }
 
         read_bytes += read_size;
@@ -435,8 +438,7 @@ size_t file_read(void *dst, off_t offset, size_t size, File *file)
         size_t read_size = size - read_bytes;
 
         // 先读入临时缓冲区
-        size_t result = fat_read(buf, offset + read_bytes, SECT_SIZE, &file->fat_entry);
-        if (result < SECT_SIZE)
+        if (0 > fat_read(buf, offset + read_bytes, SECT_SIZE, &file->fat_entry))
         {
             return read_bytes;
         }

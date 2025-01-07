@@ -40,3 +40,18 @@ typedef struct ProgramHeader
     uint32_t p_flags;
     uint32_t p_align;
 } __attribute__((packed)) ProgramHeader;
+
+// Program Header Type
+#define PT_NULL 0x00000000    // Program header table entry unused
+#define PT_LOAD 0x00000001    // Loadable segment
+#define PT_DYNAMIC 0x00000002 // Dynamic linking information
+#define PT_INTERP 0x00000003  // Interpreter information
+#define PT_NOTE 0x00000004    // Auxiliary information
+#define PT_SHLIB 0x00000005   // Reserved
+#define PT_PHDR 0x00000006    // Segment containing program header table itself
+#define PT_TLS 0x00000007     // Thread-Local Storage template
+
+// Program Header Flags
+#define PF_X 0x1 // Executable segment
+#define PF_W 0x2 // Writeable segment
+#define PF_R 0x4 // Readable segment

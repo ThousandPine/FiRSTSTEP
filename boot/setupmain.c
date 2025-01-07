@@ -186,7 +186,7 @@ void setupmain(void)
 
     for (uint32_t i = 0; i < ELF->e_phnum; i++, prog++)
     {
-        if (prog->p_memsz == 0)
+        if (prog->p_memsz == 0 || prog->p_type != PT_LOAD)
         {
             continue;
         }

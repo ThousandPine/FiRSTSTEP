@@ -2,8 +2,16 @@
 #include "kernel/page.h"
 #include "kernel/kernel.h"
 #include "kernel/x86.h"
+#include "string.h"
 
 #define NODE_COUNT 1024 // 链表节点缓冲区大小
+
+typedef struct page_node
+{
+    uint32_t addr;
+    size_t count;
+    struct page_node *next;
+} page_node;
 
 static page_node node_buf[NODE_COUNT];             // 链表节点缓冲区
 static uint8_t bitmap[(NODE_COUNT + 7) / 8] = {0}; // 位图初始化为全 0
@@ -64,7 +72,7 @@ static void free_node(page_node *node)
 }
 
 // 添加空闲页记录
-void pmu_add_record(uint32_t addr, size_t count)
+static void pmu_add_record(uint32_t addr, size_t count)
 {
     DEBUGK("Add page free record: addr = %p, count = %u", addr, count);
 
@@ -125,73 +133,62 @@ void pmu_add_record(uint32_t addr, size_t count)
 }
 
 /**
- * 申请指定数量的内存页
+ * 申请一个内存页
  *
- * @return 内存页列表，可能包括多个节点,内存不足时返回 NULL;
- *         请保存该链表，用于后续释放。
+ * @return 页起始地址，0 表示失败
  */
-page_node *pmu_alloc_pages(size_t count)
+uint32_t pmu_alloc(void)
 {
-    if (pmu.count < count)
+    if (pmu.count == 0)
     {
-        return NULL;
+        return 0;
     }
 
-    // 当前头节点就是结果链表的头节点
-    page_node *result = pmu.head;
+    assert(pmu.head != NULL);
 
-    // 从第一个节点开始累加，找到满足 count 数量的最后一个节点
-    page_node *p = pmu.head;
-    size_t sum = p->count;
-    while (sum < count)
+    // 从第一个节点取出一页
+    uint32_t addr = pmu.head->addr;
+    pmu.head->addr += PAGE_SIZE;
+    --pmu.count;
+    --pmu.head->count;
+
+    // 如果节点被取空，则删除该节点
+    if (pmu.head->count == 0)
     {
-        p = p->next;
-        sum += p->count;
+        page_node *next = pmu.head->next;
+        free_node(pmu.head);
+        pmu.head = next;
     }
 
-    // 空闲页面数量大于等于 count 的情况下 p 不可能为 NULL
-    assert(p != NULL);
-
-    // sum 和 count 的差值就是最后一个节点多余的页面
-    size_t surplus = sum - count;
-    size_t require = p->count - surplus;
-
-    // 该节点有剩余的页面，则将节点拆分成两个部分
-    if (surplus > 0)
-    {
-        // 创建新节点保存节点中多余的页面，并作为新的头节点
-        pmu.head = alloc_node(p->addr + require * PAGE_SIZE, surplus);
-        pmu.head->next = p->next;
-        // 取走的节点则只保留需要的数量
-        p->count = require;
-    }
-    // 无剩余页面，表示把整个节点取走
-    else
-    {
-        // 则将下一个节点当作新的头节点
-        pmu.head = p->next;
-    }
-    // 断开与原链表的连接
-    p->next = NULL;
-
-    return result;
+    return addr;
 }
 
 /**
- * 将链表与其中记录的页面设置为空闲
+ * 释放内存页
  *
- * @param node 链表需要来自 pmu_alloc_pages 的返回值
+ * @param addr 页地址
  */
-void pmu_free_pages(page_node *node)
+void pmu_free(uint32_t addr)
 {
-    while (node != NULL)
-    {
-        uint32_t addr = node->addr;
-        size_t count = node->count;
-        page_node *next = node->next;
+    pmu_add_record(addr, 1);
+}
 
-        free_node(node);             // 释放节点
-        pmu_add_record(addr, count); // 添加空闲页记录
-        node = next;
+
+/**
+ * 初始化内存页管理器
+ * 
+ * @param addr 空页起始地址
+ * @param count 空闲页数量
+ */
+void pmu_init(uint32_t addr, size_t count)
+{
+    pmu.count = 0;
+    while (pmu.head != NULL)
+    {
+        page_node *next = pmu.head->next;
+        free_node(pmu.head);
+        pmu.head = next;
     }
+    memset(bitmap, 0, sizeof(bitmap));
+    pmu_add_record(addr, count);
 }

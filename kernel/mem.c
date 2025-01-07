@@ -40,5 +40,5 @@ void mem_init(void)
     // 添加内核空间以上的内存到空闲页面记录
     uint32_t addr = ALIGN_UP(kernel_addr_end, PAGE_SIZE); // 地址进行 4 KiB 对齐
     assert(addr < mem_size);
-    pmu_add_record(addr, (mem_size - addr) / PAGE_SIZE);
+    pmu_init(addr, (mem_size - addr) / PAGE_SIZE);
 }

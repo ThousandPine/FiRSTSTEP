@@ -5,3 +5,5 @@
 
 #define ALIGN_UP(x, align) (((x) + (align) - 1) / (align) * (align))
 #define ALIGN_DOWN(x, align) ((x) / (align) * (align))
+
+#define CEIL_DIV(a, b) (((a) + (b) - 1) / (b))

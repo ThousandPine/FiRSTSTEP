@@ -4,6 +4,7 @@
 void tty_init(void);
 void mem_init(void);
 void fs_init(void);
+void idt_init(void);
 
 static char stack[2048]; // 内核栈空间
 
@@ -36,6 +37,8 @@ int main(uint32_t kernel_start, uint32_t kernel_end)
     mem_init();
 
     fs_init();
+
+    idt_init();
 
     // 内核不能 return，并且返回地址已经在初始化栈时丢失了
     panic("The kernel runs to the end");

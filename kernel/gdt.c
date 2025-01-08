@@ -32,19 +32,19 @@ void gdt_init(void)
         .offset = (uint32_t)gdt,
     };
 
-    asm volatile("lgdt %0" : : "m"(gdtr));
-
-    // Set Segment Register
     asm volatile(
+        "lgdt %[gdtr]\n"          // 加载 GDT
+        "ljmp %[code_seg], $1f\n" // 远跳转刷新 CS 寄存器，加载内核代码段选择子
+        "1:"
         "mov %[data_seg], %%ax\n" // 加载内核数据段选择子
         "mov %%ax, %%ds\n"
         "mov %%ax, %%es\n"
         "mov %%ax, %%fs\n"
         "mov %%ax, %%gs\n"
         "mov %%ax, %%ss\n"
-        "ljmp %[code_seg], $1f\n" // 加载内核代码段选择子并远跳转刷新 CS 寄存器
-        "1:"
         : // 无输出
-        : [data_seg] "i"(seg_sel_val(KER_DATA_INDEX, 0, 0)), [code_seg] "i"(seg_sel_val(KER_CODE_INDEX, 0, 0))
+        : [gdtr] "m"(gdtr),
+          [data_seg] "i"(seg_sel_val(KER_DATA_INDEX, 0, 0)),
+          [code_seg] "i"(seg_sel_val(KER_CODE_INDEX, 0, 0))
         : "memory", "ax");
 }

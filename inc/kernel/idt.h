@@ -4,6 +4,10 @@
 
 #define IDT_ENTRY_COUNT 256 // 有 256 个中断向量
 
+// 0-31 为 CPU 保留中断，所以从 32 开始编号
+#define IDT_PIC1_OFFSET 32 // IRQ 0-7 中断向量起始编号
+#define IDT_PIC2_OFFSET 40 // IRQ 8-15 中断向量起始编号
+
 // Gate Descriptor gate_type
 #define GT_INT 0b1110  // 32-bit Interrupt Gate
 #define GT_TRAP 0b1111 // 32-bit Trap Gate

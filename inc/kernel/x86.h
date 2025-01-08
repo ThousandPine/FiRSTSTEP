@@ -69,3 +69,13 @@ static inline void set_cr3(uint32_t value)
 {
     asm volatile("mov %0,%%cr3" : : "r"(value));
 }
+
+static inline void sti(void)
+{
+    asm volatile("sti" ::);
+}
+
+static inline void cli(void)
+{
+    asm volatile("cli" ::);
+}

@@ -32,7 +32,7 @@ void idt_init()
 
     // 设置 IDTR
     IDTDescriptor idtr = {
-        .size = sizeof(idt),
+        .size = sizeof(idt) - 1,
         .offset = (uint32_t)idt,
     };
     // 加载 IDT

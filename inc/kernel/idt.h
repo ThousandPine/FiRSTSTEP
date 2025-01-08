@@ -29,6 +29,6 @@ typedef struct GateDescriptor
 // 存储在 IDTR 中的数据，描述 IDT 的大小和起始位置
 typedef struct IDTDescriptor
 {
-    uint16_t size;   // IDT 的字节大小
+    uint16_t size;   // 等于 IDT 的字节大小减去 1
     uint32_t offset; // IDT 的线性地址（不是物理地址，适用分页地址转换）
 } __attribute__((packed)) IDTDescriptor;

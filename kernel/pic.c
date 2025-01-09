@@ -26,6 +26,9 @@ static void out_delay(uint16_t prot, uint8_t value)
 // 初始化 8259A 中断控制芯片
 void pic_init(void)
 {
+    // 屏蔽中断
+    cli();
+
     /**
      * 保护模式下 0-31 号的中断向量为 CPU 保留项
      * 而默认情况下 IRQ 0-7 映射的中断向量为 8-15
@@ -43,7 +46,7 @@ void pic_init(void)
     out_delay(PIC1_IO, ICW1_ICW4); // 主片 ICW1
     out_delay(PIC2_IO, ICW1_ICW4); // 从片 ICW1
 
-    // 通过 ICW2 设置 IRQ 映射的中断向量起始编号
+    // 通过 ICW2 设置 IRQ 映射的中断向量起始编号，需要是 8 的整数倍（低 3 位为 0）
     out_delay(PIC1_IO + 1, IDT_PIC1_OFFSET); // 主片 ICW2
     out_delay(PIC2_IO + 1, IDT_PIC2_OFFSET); // 从片 ICW2
 
@@ -54,4 +57,8 @@ void pic_init(void)
     // 通过 ICW4 设置为 80x86 模式
     out_delay(PIC1_IO + 1, 1); // 主片 ICW4
     out_delay(PIC2_IO + 1, 1); // 从片 ICW4
+
+    // 通过 OCW1 设置中断掩码，值 1 表示屏蔽该位中断
+    out_delay(PIC1_IO + 1, 0xFF); // 主片 OCW1，屏蔽所有中断
+    out_delay(PIC2_IO + 1, 0xFF); // 从片 OCW1，屏蔽所有中断
 }

@@ -77,6 +77,7 @@ static void pmu_add_record(uint32_t addr, size_t count)
     DEBUGK("Add page free record: addr = %p, count = %u", addr, count);
 
     assert(count != 0);          // 数量不得为 0
+    assert(addr != 0);           // 地址不得为 0
     assert((addr & 0xFFF) == 0); // 地址 4 KiB 对齐
 
     pmu.count += count;
@@ -166,10 +167,14 @@ uint32_t pmu_alloc(void)
 /**
  * 释放内存页
  *
- * @param addr 页地址
+ * @param addr 页地址，不得为 0
  */
 void pmu_free(uint32_t addr)
 {
+    if (addr == 0)
+    {
+        return;
+    }
     pmu_add_record(addr, 1);
 }
 

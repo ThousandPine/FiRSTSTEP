@@ -1,5 +1,6 @@
 #include "kernel/x86.h"
 #include "kernel/idt.h"
+#include "kernel/kernel.h"
 
 /**
  * 硬件上通过串联两个 8259A 芯片实现 15 种外部中断识别
@@ -11,6 +12,9 @@
 
 // Initialization Command Words
 #define ICW1_ICW4 0x11 // 表示需要 ICW4
+
+// End of Interrupt
+#define PIC_EOI 0x20
 
 // 输出到端口，并等待一段时间
 static void out_delay(uint16_t prot, uint8_t value)
@@ -61,4 +65,46 @@ void pic_init(void)
     // 通过 OCW1 设置中断掩码，值 1 表示屏蔽该位中断
     out_delay(PIC1_IO + 1, 0xFF); // 主片 OCW1，屏蔽所有中断
     out_delay(PIC2_IO + 1, 0xFF); // 从片 OCW1，屏蔽所有中断
+}
+
+// 向 PIC 芯片发送中断结束命令
+void pic_send_eoi(uint8_t irq)
+{
+    // 如果是来自从片的中断，需要同时向主片和从片发送 EOI
+    if (irq >= 8)
+        outb(PIC2_IO, PIC_EOI);
+
+    outb(PIC1_IO, PIC_EOI);
+}
+
+// 开启指定 IRQ
+void pic_enable_irq(uint8_t irq)
+{
+    assert(irq < 16);
+    uint16_t port = PIC1_IO + 1;
+
+    if (irq >= 8)
+    {
+        irq -= 8;
+        port = PIC2_IO + 1;
+    }
+
+    uint8_t value = inb(port) & ~(1 << irq);
+    outb(port, value);
+}
+
+// 关闭指定 IRQ
+void pic_disable_irq(uint8_t irq)
+{
+    assert(irq < 16);
+    uint16_t port = PIC1_IO + 1;
+
+    if (irq >= 8)
+    {
+        irq -= 8;
+        port = PIC2_IO + 1;
+    }
+
+    uint8_t value = inb(port) | (1 << irq);
+    outb(port, value);
 }

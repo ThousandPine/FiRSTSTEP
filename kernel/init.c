@@ -11,12 +11,13 @@ int init(void)
 {
     tty_init();
 
+    idt_init();
+    pic_init();
+    sti();
+
     mem_init();
 
     fs_init();
-
-    idt_init();
-    pic_init();
 
     // 内核不能 return，并且返回地址已经在初始化栈时丢失了
     panic("The kernel runs to the end");

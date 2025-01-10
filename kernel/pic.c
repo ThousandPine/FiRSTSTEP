@@ -30,9 +30,6 @@ static void out_delay(uint16_t prot, uint8_t value)
 // 初始化 8259A 中断控制芯片
 void pic_init(void)
 {
-    // 屏蔽中断
-    cli();
-
     /**
      * 保护模式下 0-31 号的中断向量为 CPU 保留项
      * 而默认情况下 IRQ 0-7 映射的中断向量为 8-15

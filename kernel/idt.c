@@ -63,7 +63,4 @@ void idt_init()
     };
     // 加载 IDT
     asm volatile("lidt %0" ::"m"(idtr) : "memory");
-
-    // 启用中断
-    sti();
 }

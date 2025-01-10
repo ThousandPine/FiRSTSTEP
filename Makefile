@@ -42,5 +42,6 @@ clean:
 	$(MAKE) -C boot clean
 	$(MAKE) -C kernel clean
 	$(MAKE) -C lib clean
+	rm -f $(IMG_NAME)
 
 .PHONY: boot kernel lib

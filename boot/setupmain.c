@@ -6,9 +6,9 @@
 #include "algobase.h"
 
 #define KERNEL_NAME "kernel"                                // 内核 ELF 文件名（长度不超过 8 字节）
-#define ELF ((ELFHeader *)0x8000)                    // 内核 ELF 加载位置
+#define ELF ((ELFHeader *)0x8000)                           // 内核 ELF 加载位置
 #define SECTSIZE 512                                        // 扇区大小为 512 字节
-#define MBR (((MBR *)0x7C00))                        // 指针类型转换，读取位于内存 0x7C00 的 MBR
+#define MBR (((MBR *)0x7C00))                               // 指针类型转换，读取位于内存 0x7C00 的 MBR
 #define HW_MAP_START_ADDR 0xA0000                           // 前 1MB 可用地址上界，0xA0000 ~ 0xFFFFF 是硬件映射空间
 #define TOUPPER(x) (x + ('A' - 'a') * (x > 'a' && x < 'z')) // 字符转换为大写
 
@@ -95,10 +95,10 @@ void setupmain(void)
      */
 
     // 计算 FAT16 各区域起始扇区（相对硬盘起始位置）
-    uint32_t const fat_fst_sec = boot_part.start_lba + bpb.rsvd_sec_cnt;                                     // FAT 表起始扇区
-    uint32_t const root_fst_sec = fat_fst_sec + (bpb.num_fats * bpb.sec_per_fat_16);                         // 根目录起始扇区
+    uint32_t const fat_fst_sec = boot_part.start_lba + bpb.rsvd_sec_cnt;                              // FAT 表起始扇区
+    uint32_t const root_fst_sec = fat_fst_sec + (bpb.num_fats * bpb.sec_per_fat_16);                  // 根目录起始扇区
     uint32_t const root_sec_cnt = (bpb.root_ent_cnt * sizeof(FatDirEntry) + SECTSIZE - 1) / SECTSIZE; // 根目录占用扇区数量（向上取整）
-    uint32_t const data_fst_sec = root_fst_sec + root_sec_cnt;                                               // 数据区起始扇区
+    uint32_t const data_fst_sec = root_fst_sec + root_sec_cnt;                                        // 数据区起始扇区
 
     // 搜索对应的根目录下的内核文件条目
     uint8_t is_found = 0;

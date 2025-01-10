@@ -173,10 +173,9 @@ void pmu_free(uint32_t addr)
     pmu_add_record(addr, 1);
 }
 
-
 /**
  * 初始化内存页管理器
- * 
+ *
  * @param addr 空页起始地址
  * @param count 空闲页数量
  */

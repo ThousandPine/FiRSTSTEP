@@ -8,7 +8,7 @@
  * 按照 ATA 标准
  * 在写入命令寄存器后的 400 ns 内状态寄存器中的 BSY 位设置为 1
  */
-static void ata_bsy_delay()
+static void ata_bsy_delay(void)
 {
     // 延迟 400ns 等待状态更新
     for (int i = 0; i < 4; i++)

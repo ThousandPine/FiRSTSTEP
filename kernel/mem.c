@@ -29,9 +29,6 @@ static size_t detect_memory(void)
 
 void mem_init(void)
 {
-    // 初始化 gdt
-    gdt_init();
-
     // 检测内存大小
     size_t mem_size = detect_memory();
     DEBUGK("mem_size: %u MiB", mem_size >> 20);

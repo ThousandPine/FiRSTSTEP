@@ -3,9 +3,8 @@
 #include "kernel/pmu.h"
 #include "kernel/kernel.h"
 #include "kernel/x86.h"
+#include "boot/args.h"
 #include "algobase.h"
-
-uint32_t kernel_addr_start, kernel_addr_end; // 内核使用的内存范围，由 bootloader 传参
 
 static size_t detect_memory(void)
 {
@@ -38,6 +37,8 @@ void mem_init(void)
     DEBUGK("mem_size: %u MiB", mem_size >> 20);
 
     // 添加内核空间以上的内存到空闲页面记录
+    uint32_t kernel_addr_end = *(uint32_t *)P_KERNEL_ADDR_END;
+
     uint32_t addr = ALIGN_UP(kernel_addr_end, PAGE_SIZE); // 地址进行 4 KiB 对齐
     assert(addr < mem_size);
     pmu_init(addr, (mem_size - addr) / PAGE_SIZE);

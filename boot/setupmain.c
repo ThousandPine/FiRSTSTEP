@@ -2,6 +2,7 @@
 #include "kernel/mbr.h"
 #include "kernel/fat16.h"
 #include "kernel/elf.h"
+#include "boot/args.h"
 #include "algobase.h"
 
 #define KERNEL_NAME "kernel"                                // 内核 ELF 文件名（长度不超过 8 字节）
@@ -203,8 +204,12 @@ void setupmain(void)
         memset((void *)prog->p_paddr + prog->p_filesz, 0x0, prog->p_memsz - prog->p_filesz);
     }
 
+    // 写入参数到目标地址
+    *(uint32_t *)P_KERNEL_ADDR_START = kernel_start;
+    *(uint32_t *)P_KERNEL_ADDR_END = kernel_end;
+
     // 跳转到内核入口，不会返回
-    ((void (*)(uint32_t, uint32_t))(ELF->e_entry))(kernel_start, kernel_end);
+    ((void (*)())(ELF->e_entry))();
 
     error("The kernel should not return");
 }

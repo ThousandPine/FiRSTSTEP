@@ -9,16 +9,10 @@ void pic_init(void);
 
 static char stack[2048]; // 内核栈空间
 
-extern uint32_t kernel_addr_start, kernel_addr_end;
-
-int main(uint32_t kernel_start, uint32_t kernel_end)
+int main(void)
 {
     // 关闭中断
     cli();
-
-    // 初始化栈会导致参数丢失，所以先记录到全局变量中
-    kernel_addr_start = kernel_start;
-    kernel_addr_end = kernel_end;
 
     /**
      * 初始化内核栈

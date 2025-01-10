@@ -14,7 +14,7 @@ _start:
     mov    %ax, %es         # 额外段
 
     # 设置临时栈空间
-    mov    $0xFFFF, %sp
+    mov    $0x1000, %sp
 
     mov    $msg0, %si  # SI 指向字符串起始地址
     call   print       # 调用打印字符串子程序

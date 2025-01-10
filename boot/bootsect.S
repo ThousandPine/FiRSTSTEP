@@ -1,4 +1,4 @@
-#define SETUP_BASE 0x01000 // setup 内存位置
+#define SETUP_BASE 0x02000 // setup 内存位置
 
 .section .text
 .global _start

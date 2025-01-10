@@ -40,11 +40,11 @@ fi
 # 计算 BIN_FILE 占用的扇区数量，向上取整
 SECTOR_COUNT=$(( (BIN_SIZE + 511) / 512 ))
 
-# 检查是否在合法范围内（1 ~ 54）
+# 检查是否在合法范围内（1 ~ 46）
 if [ $SECTOR_COUNT -eq 0 ]; then
     echo "Error: Invalid sector count calculated as 0. Check '$BIN_FILE' size."
     exit 1
-elif [ $SECTOR_COUNT -gt 54 ]; then
+elif [ $SECTOR_COUNT -gt 46 ]; then
     echo "Error: '$BIN_FILE' occupies too many sectors ($SECTOR_COUNT). Maximum is 54."
     exit 1
 fi

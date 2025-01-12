@@ -95,5 +95,5 @@ void mem_init(void)
     pmu_init(addr, (mem_size - addr) / PAGE_SIZE);
 
     // 初始化内核分页
-    page_init(mem_size);
+    // page_init(mem_size);
 }

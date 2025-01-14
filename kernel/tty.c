@@ -20,7 +20,7 @@
 #define CRTC_CURSOR_H 0xE     // 光标位置 - 高位
 #define CRTC_CURSOR_L 0xF     // 光标位置 - 低位
 
-#define CGA_BASE_ADDR 0xB8000            // 显卡 CGA 模式内存起始位置
+#define CGA_BASE_ADDR 0xC0000000 + 0xB8000            // 显卡 CGA 模式内存起始位置
 #define CGA_MEM_SIZE (0xC0000 - 0xB8000) // 显卡 CGA 模式内存大小
 #define WIDTH 80
 #define HIGHT 25

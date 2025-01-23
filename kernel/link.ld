@@ -15,12 +15,12 @@ SECTIONS
 
     . = 0x100000; /* 初始地址为 1 MiB */
 
-    .text.lower : AT(ADDR(.text.lower))
+    .text.lower : 
     {
         *(.text.lower)
     }
 
-    .data.lower : AT(ADDR(.data.lower))
+    .data.lower : 
     {
         *(.data.lower)
     }
@@ -31,22 +31,22 @@ SECTIONS
 
     /* AT(...) 用于在 ELF 文件中表示期望的加载地址，将地址减少 3 GiB 
        消除刚刚增加的偏移，表示希望将内核加载到低段内存 */
-	.text ALIGN (4K) : AT (ADDR (.text) - 0xC0000000)
+	.text : AT (ADDR (.text) - 0xC0000000)
 	{
 		*(.text)
 	}
 
-	.rodata ALIGN (4K) : AT (ADDR (.rodata) - 0xC0000000)
+	.rodata : AT (ADDR (.rodata) - 0xC0000000)
 	{
 		*(.rodata)
 	}
 
-	.data ALIGN (4K) : AT (ADDR (.data) - 0xC0000000)
+	.data : AT (ADDR (.data) - 0xC0000000)
 	{
 		*(.data)
 	}
 
-	.bss ALIGN (4K) : AT (ADDR (.bss) - 0xC0000000)
+	.bss : AT (ADDR (.bss) - 0xC0000000)
 	{
 		*(COMMON)
 		*(.bss)

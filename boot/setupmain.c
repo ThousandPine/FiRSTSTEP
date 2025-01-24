@@ -209,7 +209,6 @@ void setupmain(void)
     *(uint32_t *)P_KERNEL_ADDR_END = kernel_end;
 
     // 跳转到内核入口，不会返回
-    __asm__ volatile("xchgw %bx, %bx");
     ((void (*)())(ELF->e_entry))();
 
     error("The kernel should not return");

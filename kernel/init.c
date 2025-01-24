@@ -14,10 +14,10 @@ int init(void)
 {
     tty_init();
 
+    mem_init();
+
     idt_init();
     pic_init();
-
-    mem_init();
 
     fs_init();
 

@@ -4,6 +4,38 @@
 
 #define PAGE_SIZE (1U << 12) // 单个页面大小 4 KiB
 
+#define page_dir_set(entry, _addr, _us, _rw, _present) \
+    do                                                 \
+    {                                                  \
+        entry.addr = (_addr) >> 12;                    \
+        entry.us = (_us);                              \
+        entry.rw = (_rw);                              \
+        entry.present = (_present);                    \
+        entry.pwt = 0;                                 \
+        entry.pcd = 0;                                 \
+        entry.accessed = 0;                            \
+        entry.dirty = 0;                               \
+        entry.ps = 0;                                  \
+        entry.global = 0;                              \
+        entry.avl = 0;                                 \
+    } while (0)
+
+#define page_tabel_set(entry, _addr, _us, _rw, _present) \
+    do                                                   \
+    {                                                    \
+        entry.addr = (_addr) >> 12;                      \
+        entry.us = (_us);                                \
+        entry.rw = (_rw);                                \
+        entry.present = (_present);                      \
+        entry.pwt = 0;                                   \
+        entry.pcd = 0;                                   \
+        entry.accessed = 0;                              \
+        entry.dirty = 0;                                 \
+        entry.pat = 0;                                   \
+        entry.global = 0;                                \
+        entry.avl = 0;                                   \
+    } while (0)
+
 typedef struct PageDirEntry
 {
     uint8_t present : 1;  // 是否存在于物理内存

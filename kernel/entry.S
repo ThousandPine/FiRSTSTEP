@@ -1,18 +1,37 @@
+#include "kernel/memlayout.h"
+
 #define STACK_SIZE 4096
 
+.code32
 .global _start
-.extern gdt_init, init
+.extern set_higher_half_pages, clear_lower_pages, gdt_init, init
 
-# 在 .bss 段定义栈空间
-.section .bss
-.lcomm stack, STACK_SIZE
+.section .lower.text
+_start:
+    cli
+
+    # 栈定义在 .bss 段，还没有启用 Higher Half Kernel 的情况下需要减去偏移量
+    mov    $(stack + STACK_SIZE - HIGHER_HALF_KERNEL_BASE), %esp
+    mov    $0, %ebp # 清除栈帧
+
+    # 设置分页，将内核映射到高地址
+    call   set_higher_half_pages
+
+    jmp    higherhalf
+
+.section .lower.data
+
+
 
 .section .text
-.code32
-    _start:
-    cli
-    call    gdt_init
-    mov     $(stack + STACK_SIZE), %esp
-    call    init
+higherhalf:
+    mov    $(stack + STACK_SIZE), %esp
+    call   clear_lower_pages
+    call   gdt_init
+    call   init
+1:
     hlt
+    jmp    1b
 
+.section .bss
+.lcomm stack, STACK_SIZE

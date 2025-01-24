@@ -2,7 +2,7 @@
 #include "kernel/mbr.h"
 #include "kernel/fat16.h"
 #include "kernel/elf.h"
-#include "boot/args.h"
+#include "kernel/memlayout.h"
 #include "algobase.h"
 
 #define KERNEL_NAME "kernel"                                // 内核 ELF 文件名（长度不超过 8 字节）

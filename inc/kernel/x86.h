@@ -2,6 +2,9 @@
 
 #include "types.h"
 
+#define CR0_PG (1 << 31) // CR0 寄存器启用分页功能标志位
+
+__attribute__((always_inline))
 static inline uint8_t inb(uint16_t port)
 {
     uint8_t value;
@@ -11,6 +14,7 @@ static inline uint8_t inb(uint16_t port)
     return value;
 }
 
+__attribute__((always_inline))
 static inline void insl(uint16_t port, void *addr, uint32_t count)
 {
     asm volatile(
@@ -24,6 +28,7 @@ static inline void insl(uint16_t port, void *addr, uint32_t count)
     );
 }
 
+__attribute__((always_inline))
 static inline void outb(uint16_t port, uint8_t value)
 {
     asm volatile("outb %0, %1"
@@ -33,6 +38,7 @@ static inline void outb(uint16_t port, uint8_t value)
     );
 }
 
+__attribute__((always_inline))
 static inline void outsl(uint16_t port, const void *addr, uint32_t count)
 {
     asm volatile(
@@ -46,6 +52,7 @@ static inline void outsl(uint16_t port, const void *addr, uint32_t count)
     );
 }
 
+__attribute__((always_inline))
 static inline uint32_t get_cr0(void)
 {
     uint32_t value;
@@ -53,11 +60,13 @@ static inline uint32_t get_cr0(void)
     return value;
 }
 
+__attribute__((always_inline))
 static inline void set_cr0(uint32_t value)
 {
     asm volatile("mov %0,%%cr0" : : "r"(value));
 }
 
+__attribute__((always_inline))
 static inline uint32_t get_cr3(void)
 {
     uint32_t value;
@@ -65,16 +74,19 @@ static inline uint32_t get_cr3(void)
     return value;
 }
 
+__attribute__((always_inline))
 static inline void set_cr3(uint32_t value)
 {
     asm volatile("mov %0,%%cr3" : : "r"(value));
 }
 
+__attribute__((always_inline))
 static inline void sti(void)
 {
     asm volatile("sti" ::);
 }
 
+__attribute__((always_inline))
 static inline void cli(void)
 {
     asm volatile("cli" ::);

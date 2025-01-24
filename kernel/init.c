@@ -1,5 +1,4 @@
 #include "kernel/kernel.h"
-#include "kernel/x86.h"
 
 void tty_init(void);
 void mem_init(void);
@@ -11,11 +10,10 @@ int init(void)
 {
     tty_init();
 
+    mem_init();
+
     idt_init();
     pic_init();
-    sti();
-
-    mem_init();
 
     fs_init();
 

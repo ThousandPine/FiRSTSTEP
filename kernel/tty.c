@@ -1,6 +1,7 @@
 #include "types.h"
 #include "string.h"
 #include "kernel/x86.h"
+#include "kernel/memlayout.h"
 
 /**
  * CRT Controller (CRTC) Registers
@@ -20,8 +21,9 @@
 #define CRTC_CURSOR_H 0xE     // 光标位置 - 高位
 #define CRTC_CURSOR_L 0xF     // 光标位置 - 低位
 
-#define CGA_BASE_ADDR 0xB8000            // 显卡 CGA 模式内存起始位置
-#define CGA_MEM_SIZE (0xC0000 - 0xB8000) // 显卡 CGA 模式内存大小
+#define CGA_BASE_ADDR 0xB8000                                    // 显卡 CGA 模式内存起始位置
+#define CGA_MEM_SIZE (0xC0000 - 0xB8000)                         // 显卡 CGA 模式内存大小
+#define VIDEO_MEM_BASE (CGA_BASE_ADDR + HIGHER_HALF_KERNEL_BASE) // 经过地址修正的显存地址
 #define WIDTH 80
 #define HIGHT 25
 #define BLANK 0x00 // 默认填充字符
@@ -45,7 +47,7 @@
  */
 static struct
 {
-    uint32_t vmem_base; // 在显存中的基地址，必须是 2 的倍数
+    uint32_t base_offset; // 在显存中的基地址，必须是 2 的倍数
                         // 不是在内存中的地址，而是相对于显存映射区域的地址，也就是在显存内部的偏移
     uint32_t vmem_size; // 显存大小上限
     uint32_t screen;    // 显示内容起始地址，参考 set_screen 函数说明
@@ -86,8 +88,8 @@ static void set_cursor(void)
 // 用空白字符填充显存
 static void reset_vmem(void)
 {
-    uint8_t *p = (uint8_t *)CGA_BASE_ADDR + tty.vmem_base;
-    uint8_t *p_end = (uint8_t *)CGA_BASE_ADDR + tty.vmem_base + tty.vmem_size;
+    uint8_t *p = (uint8_t *)VIDEO_MEM_BASE + tty.base_offset;
+    uint8_t *p_end = (uint8_t *)VIDEO_MEM_BASE + tty.base_offset + tty.vmem_size;
 
     while (p < p_end)
     {
@@ -99,7 +101,7 @@ static void reset_vmem(void)
 // 设置光标所在位置的字符内容
 static inline void set_char(char c)
 {
-    uint8_t *p = (uint8_t *)(CGA_BASE_ADDR + (tty.cursor << 1));
+    uint8_t *p = (uint8_t *)(VIDEO_MEM_BASE + (tty.cursor << 1));
     *p++ = c;
     *p = tty.attr;
 }
@@ -166,8 +168,8 @@ int tty_write(const char *buf, size_t n)
 
 void tty_clear(void)
 {
-    tty.screen = tty.vmem_base >> 1;
-    tty.cursor = tty.vmem_base >> 1;
+    tty.screen = tty.base_offset >> 1;
+    tty.cursor = tty.base_offset >> 1;
 
     reset_vmem();
     set_screen();
@@ -176,7 +178,7 @@ void tty_clear(void)
 
 void tty_init(void)
 {
-    tty.vmem_base = 0; // 必须是 2 的倍数
+    tty.base_offset = 0; // 必须是 2 的倍数
     tty.vmem_size = CGA_MEM_SIZE;
     tty.attr = 0x07; // 白色字符
 

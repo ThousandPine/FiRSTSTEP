@@ -12,12 +12,15 @@
  * FIXME: 补充文件读取失败的情况
  * FIXME: 错误提前退出时，要释放申请的资源（比如页目录、页表和页）
  * TODO: 将程序相关的信息（页目录、程序入口）保存到类似 PCB 的结构体之中
- * 
+ *
  * @param elf ELF 文件
  * @return 0 成功，-1 失败
  */
 int elf_loader(File *elf)
 {
+    // FIXME: 需要根据新的内存管理方式进行重构
+    return 0;
+
     ELFHeader elfhdr;
 
     // 读取 ELF 文件头

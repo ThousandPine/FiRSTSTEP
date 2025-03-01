@@ -41,7 +41,7 @@ static void page_init(size_t mem_size)
     uint32_t page_addr = pmu_alloc();
     assert(page_addr != 0);
     // 初始化页目录
-    PageDirEntry *page_dir = (PageDirEntry *)page_addr;
+    page_dir_entry *page_dir = (page_dir_entry *)page_addr;
     memset(page_dir, 0, PAGE_SIZE);
 
     // 创建所有内存地址的页表映射
@@ -63,7 +63,7 @@ static void page_init(size_t mem_size)
             page_dir[pd_index].ps = 0;
         }
         // 找到页表
-        PageTabelEntry *page_table = (PageTabelEntry *)(page_dir[pd_index].addr << 12);
+        page_tabel_entry *page_table = (page_tabel_entry *)(page_dir[pd_index].addr << 12);
         // 计算地址对应的页表下标
         size_t pt_index = (addr >> 12) & 0x3FF;
         // 设置页属性

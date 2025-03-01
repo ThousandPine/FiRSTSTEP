@@ -4,7 +4,7 @@
 
 #define PAGE_SIZE (1U << 12) // 单个页面大小 4 KiB
 
-typedef struct PageDirEntry
+typedef struct page_dir_entry
 {
     uint8_t present : 1;  // 是否存在于物理内存
     uint8_t rw : 1;       // 0 只读，1 读写
@@ -17,9 +17,9 @@ typedef struct PageDirEntry
     uint8_t global : 1;   // 全局页面
     uint8_t avl : 3;      // 保留字段
     uint32_t addr : 20;
-} __attribute__((packed)) PageDirEntry;
+} __attribute__((packed)) page_dir_entry;
 
-typedef struct PageTabelEntry
+typedef struct page_tabel_entry
 {
     uint8_t present : 1;  // 是否存在于物理内存
     uint8_t rw : 1;       // 0 只读，1 读写
@@ -32,4 +32,4 @@ typedef struct PageTabelEntry
     uint8_t global : 1;   // 全局页面
     uint8_t avl : 3;      // 保留字段
     uint32_t addr : 20;
-} __attribute__((packed)) PageTabelEntry;
+} __attribute__((packed)) page_tabel_entry;

@@ -16,9 +16,9 @@
  * @param elf ELF 文件
  * @return 0 成功，-1 失败
  */
-int elf_loader(File *elf)
+int elf_loader(file_struct *elf)
 {
-    ELFHeader elfhdr;
+    elf_header elfhdr;
 
     // 读取 ELF 文件头
     file_read(&elfhdr, 0, sizeof(elfhdr), elf);
@@ -36,7 +36,7 @@ int elf_loader(File *elf)
         DEBUGK("Page alloc failed");
         return -1;
     }
-    PageDirEntry *page_dir = (PageDirEntry *)page_dir_addr;
+    page_dir_entry *page_dir = (page_dir_entry *)page_dir_addr;
     // 初始化页目录
     memset(page_dir, 0, PAGE_SIZE);
 
@@ -44,8 +44,8 @@ int elf_loader(File *elf)
     for (size_t i = 0; i < elfhdr.e_phnum; i++)
     {
         // 读取程序头
-        ProgramHeader ph;
-        file_read(&ph, elfhdr.e_phoff + sizeof(ProgramHeader) * i, sizeof(ProgramHeader), elf);
+        program_header ph;
+        file_read(&ph, elfhdr.e_phoff + sizeof(program_header) * i, sizeof(program_header), elf);
 
         DEBUGK("Program Header [v_addr: %p] [filesz: %#x] [memsz: %#x] [type: %#x] [flags: %#x]", ph.p_vaddr, ph.p_filesz, ph.p_memsz, ph.p_type, ph.p_flags);
 
@@ -76,7 +76,7 @@ int elf_loader(File *elf)
                 page_dir[pd_index].rw = 1; // 页目录的写权限始终启用，让页表控制某个页是否可写
                 page_dir[pd_index].ps = 0;
             }
-            PageTabelEntry *page_table = (PageTabelEntry *)(page_dir[pd_index].addr << 12);
+            page_tabel_entry *page_table = (page_tabel_entry *)(page_dir[pd_index].addr << 12);
 
             // 创建页
             size_t pt_index = (v_addr >> 12) & 0x3FF;

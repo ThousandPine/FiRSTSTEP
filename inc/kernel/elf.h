@@ -7,7 +7,7 @@
 /**
  * ELF Header 32 bit version
  */
-typedef struct ELFHeader
+typedef struct elf_header
 {
     uint32_t e_magic; // 必须等于 ELF_MAGIC
     uint8_t e_ident[12];
@@ -24,12 +24,12 @@ typedef struct ELFHeader
     uint16_t e_shentsize;
     uint16_t e_shnum;
     uint16_t e_shstrndx;
-} __attribute__((packed)) ELFHeader;
+} __attribute__((packed)) elf_header;
 
 /**
  * Program Header 32 bit version
  */
-typedef struct ProgramHeader
+typedef struct program_header
 {
     uint32_t p_type;
     uint32_t p_offset;
@@ -39,7 +39,7 @@ typedef struct ProgramHeader
     uint32_t p_memsz;
     uint32_t p_flags;
     uint32_t p_align;
-} __attribute__((packed)) ProgramHeader;
+} __attribute__((packed)) program_header;
 
 // Program Header Type
 #define PT_NULL 0x00000000    // Program header table entry unused

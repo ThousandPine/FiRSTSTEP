@@ -6,6 +6,7 @@ void mem_init(void);
 void fs_init(void);
 void idt_init(void);
 void pic_init(void);
+void task_init(void);
 
 int init(void)
 {
@@ -18,6 +19,8 @@ int init(void)
     mem_init();
 
     fs_init();
+
+    task_init();
 
     // 内核不能 return，并且返回地址已经在初始化栈时丢失了
     panic("The kernel runs to the end");

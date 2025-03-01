@@ -13,7 +13,7 @@
 #define GT_TRAP 0b1111 // 32-bit Trap Gate
 
 // 门描述符，作为 IDT 的条目
-typedef struct GateDescriptor
+typedef struct gate_descriptor
 {
     uint16_t offset_lo;
     uint16_t selector;     // 段选择子
@@ -24,11 +24,11 @@ typedef struct GateDescriptor
     uint8_t present : 1;   // 是否有效
     uint16_t offset_hi;
 
-} __attribute__((packed)) GateDescriptor;
+} __attribute__((packed)) gate_descriptor;
 
 // 存储在 IDTR 中的数据，描述 IDT 的大小和起始位置
-typedef struct IDTDescriptor
+typedef struct idt_descriptor
 {
     uint16_t size;   // 等于 IDT 的字节大小减去 1
     uint32_t offset; // IDT 的线性地址（不是物理地址，适用分页地址转换）
-} __attribute__((packed)) IDTDescriptor;
+} __attribute__((packed)) idt_descriptor;

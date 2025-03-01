@@ -7,7 +7,7 @@
 /**
  * MBR 单个分区信息结构
  */
-typedef struct PartitionEntry
+typedef struct partition_entry
 {
     uint8_t boot_indicator; // 引导标志，0x80 表示可引导，0x00 表示不可引导
     uint8_t start_chs[3];   // 分区起始地址（CHS 格式）
@@ -15,14 +15,14 @@ typedef struct PartitionEntry
     uint8_t end_chs[3];     // 分区结束地址（CHS 格式）
     uint32_t start_lba;     // 分区起始扇区（LBA 格式）
     uint32_t num_sectors;   // 分区占用的扇区总数
-} __attribute__((packed)) PartitionEntry;
+} __attribute__((packed)) partition_entry;
 
 /**
  * MBR 分区表结构
  */
-typedef struct MBR
+typedef struct mbr_struct
 {
     uint8_t boot_code[446];       // 引导代码区
-    PartitionEntry partitions[4]; // 4 个分区表项
+    partition_entry partitions[4]; // 4 个分区表项
     uint16_t signature;           // MBR 签名，必须是 0xAA55
-} __attribute__((packed)) MBR;
+} __attribute__((packed)) mbr_struct;

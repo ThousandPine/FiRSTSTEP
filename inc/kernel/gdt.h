@@ -19,7 +19,7 @@
 #define DA_TSS 0b0100 // 32-bit TSS (Available)
 
 // 段描述符，作为 GDT 或 LDT 的条目
-typedef struct SegmentDescriptor
+typedef struct segment_descriptor
 {
     uint16_t lim_low;
     uint32_t base_low : 24;
@@ -33,14 +33,14 @@ typedef struct SegmentDescriptor
     uint8_t m32 : 1;         // 32 位标志
     uint8_t granularity : 1; // 启用 4KB 粒度地址
     uint8_t base_hi;
-} __attribute__((packed)) SegmentDescriptor;
+} __attribute__((packed)) segment_descriptor;
 
 // 存储在 GDTR 中的数据，描述 GDT 的大小和起始位置
-typedef struct GDTDescriptor
+typedef struct gdt_descriptor
 {
     uint16_t size;   // 等于 GDT 的字节大小减去 1。因为 size 的最大值为 65535，而 GDT 的长度最多为 65536 字节（8192 个条目）
     uint32_t offset; // GDT的线性地址（不是物理地址，适用分页地址转换）
-} __attribute__((packed)) GDTDescriptor;
+} __attribute__((packed)) gdt_descriptor;
 
 /**
  * 段选择子是（Segment Selector）存储在段寄存器中的数据
@@ -56,7 +56,7 @@ typedef struct GDTDescriptor
 #define seg_sel_val(index, rpl, ti) (uint16_t)(((rpl) & 0x3) | (((ti) << 2) & 0x4) | (((index) << 3) & 0xFFF8))
 
 // TSS 结构
-typedef struct TSS
+typedef struct tss_struct
 {
     uint32_t prev_tss; // 上一个任务的链接（在硬件任务切换中使用）
     uint32_t esp0;     // 特权级 0 栈指针
@@ -82,6 +82,6 @@ typedef struct TSS
     uint16_t reserved10;
     uint16_t debug_flag;  // 调试陷阱标志
     uint16_t io_map_base; // I/O 权限位图基地址
-} __attribute__((packed)) TSS;
+} __attribute__((packed)) tss_struct;
 
 void gdt_init(void);

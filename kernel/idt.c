@@ -5,7 +5,7 @@
 #include "kernel/kernel.h"
 
 // 中断向量表
-static GateDescriptor idt[IDT_ENTRY_COUNT] = {0};
+static gate_descriptor idt[IDT_ENTRY_COUNT] = {0};
 
 void set_gate(size_t index, uint8_t type, void *addr)
 {
@@ -57,7 +57,7 @@ void idt_init()
     }
 
     // 设置 IDTR
-    IDTDescriptor idtr = {
+    idt_descriptor idtr = {
         .size = sizeof(idt) - 1,
         .offset = (uint32_t)idt,
     };

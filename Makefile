@@ -21,21 +21,21 @@ $(IMG_NAME):
 	parted -s $(IMG_NAME) set 1 boot on
 	mkfs.fat -F 16 --offset=2048 $(IMG_NAME)
 
-mount:
+mount: all
 	sudo losetup -P /dev/loop0 $(IMG_NAME)
 	sudo mount /dev/loop0p1 ./mnt --mkdir
 
-umount:
+umount: all
 	- sudo umount ./mnt            
 	- sudo losetup -d /dev/loop0
 
-qemu:
+qemu: all
 	qemu-system-i386 -m 1G -drive format=raw,file=$(IMG_NAME)
 
-bochs:
+bochs: all
 	bochs -f bochsrc.cfg -q
 
-bochs-gdb:
+bochs-gdb: all
 	bochs-gdb -f bochsrc.gdb -q
 
 clean:
@@ -44,4 +44,4 @@ clean:
 	$(MAKE) -C lib clean
 	rm -f $(IMG_NAME)
 
-.PHONY: boot kernel lib
+.PHONY: all clean mount qemu bochs bochs-gdb umount boot kernel lib

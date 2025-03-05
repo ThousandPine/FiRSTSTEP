@@ -12,7 +12,7 @@ void set_gate(size_t index, uint8_t type, void *addr)
     idt[index].gate_type = type;
     idt[index].offset_lo = (uint32_t)addr & 0xFFFF;
     idt[index].offset_hi = ((uint32_t)addr >> 16) & 0xFFFF;
-    idt[index].selector = seg_sel_val(KER_CODE_INDEX, 0, 0);
+    idt[index].selector = segment_selector(KER_CODE_INDEX, 0, 0);
     idt[index].dpl = 0;
     idt[index].present = 1;
     idt[index]._zero = 0;

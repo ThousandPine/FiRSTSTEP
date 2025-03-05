@@ -7,7 +7,7 @@
 #include "string.h"
 #include "algobase.h"
 
-static __attribute__((aligned(PAGE_SIZE))) page_dir_entry kernel_page_dir[1024] = {0};
+static page_dir_entry kernel_page_dir[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 
 static size_t detect_memory(void)
 {

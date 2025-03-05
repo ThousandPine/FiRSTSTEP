@@ -53,7 +53,7 @@ typedef struct gdt_descriptor
  * @param rpl 请求权限等级
  * @param ti 0 表示 GDT，1 表示 LDT
  */
-#define seg_sel_val(index, rpl, ti) (uint16_t)(((rpl) & 0x3) | (((ti) << 2) & 0x4) | (((index) << 3) & 0xFFF8))
+#define segment_selector(index, rpl, ti) (uint16_t)(((rpl) & 0x3) | (((ti) << 2) & 0x4) | (((index) << 3) & 0xFFF8))
 
 // TSS 结构
 typedef struct tss_struct

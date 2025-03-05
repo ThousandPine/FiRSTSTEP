@@ -62,15 +62,15 @@ void gdt_init(void)
         "mov %%ax, %%ss\n"
         : // 无输出
         : [gdtr] "m"(gdtr),
-          [data_seg] "i"(seg_sel_val(KER_DATA_INDEX, 0, 0)),
-          [code_seg] "i"(seg_sel_val(KER_CODE_INDEX, 0, 0))
+          [data_seg] "i"(segment_selector(KER_DATA_INDEX, 0, 0)),
+          [code_seg] "i"(segment_selector(KER_CODE_INDEX, 0, 0))
         : "memory", "ax");
 
     // Set TR (TSS)
     asm volatile(
         "ltr %0\n"
         :
-        : "r"(seg_sel_val(TSS_INDEX, 0, 0))
+        : "r"(segment_selector(TSS_INDEX, 0, 0))
         : "memory"
     );
 }

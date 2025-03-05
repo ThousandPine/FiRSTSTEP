@@ -35,7 +35,7 @@ static size_t detect_memory(void)
  * 
  * 创建页目录和页表映射整个内存空间，便于内核管理内存
  */
-static void kernel_page_inti(size_t mem_size)
+static void kernel_page_init(size_t mem_size)
 {
     // 初始化页目录
     memset(kernel_page_dir, 0, PAGE_SIZE);

@@ -11,8 +11,8 @@
 .code32
     _start:
     cli
+    mov     $(stack + STACK_SIZE), %esp # 重新设置栈指针
     call    gdt_init
-    mov     $(stack + STACK_SIZE), %esp
     call    init
     hlt
 

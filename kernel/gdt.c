@@ -1,10 +1,10 @@
 #include "kernel/gdt.h"
 #include "string.h"
 
-static SegmentDescriptor gdt[GDT_ENTRY_COUNT] = {0};
-static TSS tss = {0};
+static segment_descriptor gdt[GDT_ENTRY_COUNT] = {0};
+static tss_struct tss = {0};
 
-static void set_seg_descriptor(SegmentDescriptor *desc, uint32_t base, uint32_t limit, uint8_t dpl, uint8_t type)
+static void set_seg_descriptor(segment_descriptor *desc, uint32_t base, uint32_t limit, uint8_t dpl, uint8_t type)
 {
     desc->base_low = base & 0xFFFFFF;
     desc->base_hi = (base >> 24) & 0xFF;
@@ -19,9 +19,9 @@ static void set_seg_descriptor(SegmentDescriptor *desc, uint32_t base, uint32_t 
     desc->granularity = 1;
 }
 
-static void set_tss_descriptor(SegmentDescriptor *desc, uint32_t base, uint8_t dpl)
+static void set_tss_descriptor(segment_descriptor *desc, uint32_t base, uint8_t dpl)
 {
-    uint32_t limit = sizeof(TSS) - 1;
+    uint32_t limit = sizeof(tss_struct) - 1;
     desc->base_low = base & 0xFFFFFF;
     desc->base_hi = (base >> 24) & 0xFF;
     desc->lim_low = limit & 0xFFFF;
@@ -45,7 +45,7 @@ void gdt_init(void)
     set_tss_descriptor(gdt + TSS_INDEX, (uint32_t)&tss, 0);           // TSS
 
     // Set GDTR
-    GDTDescriptor gdtr = {
+    gdt_descriptor gdtr = {
         .size = sizeof(gdt) - 1,
         .offset = (uint32_t)gdt,
     };

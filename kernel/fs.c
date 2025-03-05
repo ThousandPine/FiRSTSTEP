@@ -10,14 +10,14 @@
 #define BLANK ' '              // 填充符号为空格
 #define PATH_SEPARATOR '/'     // 路径分隔符
 
-static PartitionEntry part = {0};
+static partition_entry part = {0};
 static struct
 {
     lba_t fat_start_lba;       // FAT 表起始扇区（LBA 格式）
     lba_t root_start_lba;      // 根目录起始扇区（LBA 格式）
     lba_t data_start_lba;      // 数据区起始扇区（LBA 格式）
     uint32_t root_num_sectors; // 根目录占用扇区数量（向上取整）
-    BPB bpb;
+    bpb_struct bpb;
 } fat;
 
 static inline char toupper(char c)
@@ -51,7 +51,7 @@ static void next_name(const char **path, char *buf)
  * @param name 8.3 文件名字符串，扩展名前需要包括 '.'
  * @return 0 匹配成功，-1 匹配失败
  */
-static int fat_name_cmp(const FatDirEntry *entry, const char *name)
+static int fat_name_cmp(const fat_dir_entry *entry, const char *name)
 {
     // 计算文件名长度，除去结尾填充的空格
     size_t namel = sizeof(entry->name);
@@ -136,7 +136,7 @@ static inline lba_t fat_clus2lba(uint16_t clus)
  * @param offset 文件内部偏移量，必须是扇区大小的整数倍
  * @return LBA 地址，大于 0 为有效值，0 表示失败
  */
-static lba_t fat_off2lba(const FatDirEntry *entry, off_t offset)
+static lba_t fat_off2lba(const fat_dir_entry *entry, off_t offset)
 {
     assert(offset % SECT_SIZE == 0);
 
@@ -171,7 +171,7 @@ static lba_t fat_off2lba(const FatDirEntry *entry, off_t offset)
  * @param out_entry 保存找到的条目信息
  * @return 0 成功，-1 失败
  */
-static int fat_find_entry(const char *path, FatDirEntry *out_entry)
+static int fat_find_entry(const char *path, fat_dir_entry *out_entry)
 {
     static uint8_t buf[SECT_SIZE];
 
@@ -179,7 +179,7 @@ static int fat_find_entry(const char *path, FatDirEntry *out_entry)
     assert(path[0] == PATH_SEPARATOR);
 
     uint8_t find_flag = 0;
-    FatDirEntry cur_entry = {0};
+    fat_dir_entry cur_entry = {0};
 
     // 获得第一个文件名
     static char namebuf[FILENAME_MAX_LENGTH + 1];
@@ -188,10 +188,10 @@ static int fat_find_entry(const char *path, FatDirEntry *out_entry)
     // 遍历根目录区域查找文件条目
     for (uint32_t i = 0; !find_flag && i < fat.root_num_sectors; i++)
     {
-        const FatDirEntry *entries = (const FatDirEntry *)buf;
+        const fat_dir_entry *entries = (const fat_dir_entry *)buf;
         ata_read(buf, fat.root_start_lba + i, 1);
 
-        for (int t = SECT_SIZE / sizeof(FatDirEntry); !find_flag && t--; entries++)
+        for (int t = SECT_SIZE / sizeof(fat_dir_entry); !find_flag && t--; entries++)
         {
             // 表示该条目及后续条目都为空
             if (entries->name[0] == 0)
@@ -234,7 +234,7 @@ static int fat_find_entry(const char *path, FatDirEntry *out_entry)
         find_flag = 0;
         for (off_t offset = 0; !find_flag; offset += SECT_SIZE)
         {
-            const FatDirEntry *entries = (const FatDirEntry *)buf;
+            const fat_dir_entry *entries = (const fat_dir_entry *)buf;
             lba_t lba = fat_off2lba(&cur_entry, offset);
 
             /**
@@ -248,7 +248,7 @@ static int fat_find_entry(const char *path, FatDirEntry *out_entry)
             }
             ata_read(buf, lba, 1);
 
-            for (int t = SECT_SIZE / sizeof(FatDirEntry); !find_flag && t--; entries++)
+            for (int t = SECT_SIZE / sizeof(fat_dir_entry); !find_flag && t--; entries++)
             {
                 // 表示该条目及后续条目都为空
                 if (entries->name[0] == 0)
@@ -283,7 +283,7 @@ static int fat_find_entry(const char *path, FatDirEntry *out_entry)
  * @param out_file 保存文件信息
  * @return 0 成功，-1 失败
  */
-int file_open(const char *path, File *out_file)
+int file_open(const char *path, file_struct *out_file)
 {
     if (path == NULL || out_file == NULL)
     {
@@ -301,7 +301,7 @@ int file_open(const char *path, File *out_file)
  * @param entry 文件条目
  * @return 读取结果，0 成功，-1 失败
  */
-static int fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *entry)
+static int fat_read(void *dst, off_t offset, size_t size, const fat_dir_entry *entry)
 {
     assert(offset % SECT_SIZE == 0);
     assert(size % SECT_SIZE == 0);
@@ -386,7 +386,7 @@ static int fat_read(void *dst, off_t offset, size_t size, const FatDirEntry *ent
  * @param file 文件信息
  * @return 实际读取的字节数
  */
-size_t file_read(void *dst, off_t offset, size_t size, File *file)
+size_t file_read(void *dst, off_t offset, size_t size, file_struct *file)
 {
     if (dst == NULL || file == NULL)
     {
@@ -465,7 +465,7 @@ void fs_init(void)
     static uint8_t buf[SECT_SIZE];
 
     // 遍历 MBR 分区表，找到首个引导分区作为文件系统所在分区
-    const MBR *mbr = (const MBR *)buf;
+    const mbr_struct *mbr = (const mbr_struct *)buf;
 
     ata_read(buf, 0, 1);
     for (uint32_t i = 0; i < 4; i++)
@@ -482,10 +482,10 @@ void fs_init(void)
      * 读取分区文件系统参数
      *
      * 找到引导分区后，先读取该分区的第一个扇区到 buffer
-     * 将 buffer 转换为 FAT 引导扇区结构体 FatBootSector 指针，以获取 BPB 和 EBPB
+     * 将 buffer 转换为 FAT 引导扇区结构体 fat_boot_sector 指针，以获取 BPB 和 EBPB
      * 然后验证文件系统类型是否为 FAT16
      */
-    const FatBootSector *fbs = (const FatBootSector *)buf;
+    const fat_boot_sector *fbs = (const fat_boot_sector *)buf;
     ata_read(buf, part.start_lba, 1);
     fat.bpb = fbs->bpb;
 
@@ -501,6 +501,6 @@ void fs_init(void)
     // 计算 FAT16 各区域参数
     fat.fat_start_lba = part.start_lba + fat.bpb.rsvd_sec_cnt;                                       // FAT 表起始扇区
     fat.root_start_lba = fat.fat_start_lba + (fat.bpb.num_fats * fat.bpb.sec_per_fat_16);            // 根目录起始扇区
-    fat.root_num_sectors = (fat.bpb.root_ent_cnt * sizeof(FatDirEntry) + SECT_SIZE - 1) / SECT_SIZE; // 根目录占用扇区数量（向上取整）
+    fat.root_num_sectors = (fat.bpb.root_ent_cnt * sizeof(fat_dir_entry) + SECT_SIZE - 1) / SECT_SIZE; // 根目录占用扇区数量（向上取整）
     fat.data_start_lba = fat.root_start_lba + fat.root_num_sectors;                                  // 数据区起始扇区
 }

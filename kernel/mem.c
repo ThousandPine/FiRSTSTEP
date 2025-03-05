@@ -7,7 +7,7 @@
 #include "string.h"
 #include "algobase.h"
 
-#define CR0_PG (1 << 31) // CR0 寄存器启用分页功能标志位
+static __attribute__((aligned(PAGE_SIZE))) page_dir_entry kernel_page_dir[1024] = {0};
 
 static size_t detect_memory(void)
 {
@@ -31,18 +31,14 @@ static size_t detect_memory(void)
 }
 
 /**
- * 初始化分页
+ * 初始化内核页表
  * 
- * 创建页目录和页表映射整个内存空间并启用分页功能
+ * 创建页目录和页表映射整个内存空间，便于内核管理内存
  */
-static void page_init(size_t mem_size)
+static void kernel_page_inti(size_t mem_size)
 {
-    // 申请一个页用于存储页目录
-    uint32_t page_addr = pmu_alloc();
-    assert(page_addr != 0);
     // 初始化页目录
-    page_dir_entry *page_dir = (page_dir_entry *)page_addr;
-    memset(page_dir, 0, PAGE_SIZE);
+    memset(kernel_page_dir, 0, PAGE_SIZE);
 
     // 创建所有内存地址的页表映射
     for (uint32_t addr = 0; addr < mem_size; addr += PAGE_SIZE)
@@ -50,20 +46,20 @@ static void page_init(size_t mem_size)
         // 计算地址对应的页目录下标
         size_t pd_index = addr >> 22;
         // 若不存在页表，则创建
-        if (!page_dir[pd_index].present)
+        if (!kernel_page_dir[pd_index].present)
         {
             // 申请一个页用于存储页表
-            page_addr = pmu_alloc();
+            uint32_t page_addr = pmu_alloc();
             assert(page_addr != 0);
             // 设置页表属性
-            page_dir[pd_index].addr = page_addr >> 12;
-            page_dir[pd_index].present = 1;
-            page_dir[pd_index].us = 0;
-            page_dir[pd_index].rw = 1;
-            page_dir[pd_index].ps = 0;
+            kernel_page_dir[pd_index].addr = page_addr >> 12;
+            kernel_page_dir[pd_index].present = 1;
+            kernel_page_dir[pd_index].us = 0;
+            kernel_page_dir[pd_index].rw = 1;
+            kernel_page_dir[pd_index].ps = 0;
         }
         // 找到页表
-        page_tabel_entry *page_table = (page_tabel_entry *)(page_dir[pd_index].addr << 12);
+        page_tabel_entry *page_table = (page_tabel_entry *)(kernel_page_dir[pd_index].addr << 12);
         // 计算地址对应的页表下标
         size_t pt_index = (addr >> 12) & 0x3FF;
         // 设置页属性
@@ -72,14 +68,26 @@ static void page_init(size_t mem_size)
         page_table[pt_index].us = 0;
         page_table[pt_index].rw = 1;
     }
+}
 
-    /**
-     * 启用分页功能
-     * 将页目录地址加载到 CR3 寄存器
-     * 并设置 CR0 的 PG 位启用分页功能
-     */
-    set_cr3((uint32_t)page_dir);
+/**
+ * 启用分页功能
+ */
+static void page_enable(void)
+{
+    // 将页目录地址加载到 CR3 寄存器
+    set_cr3((uint32_t)kernel_page_dir);
+    // 设置 CR0 的 PG 位启用分页功能
     set_cr0(get_cr0() | CR0_PG);
+}
+
+/**
+ * 初始化内核分页
+ */
+static void page_init(size_t mem_size)
+{
+    kernel_page_inti(mem_size);
+    page_enable();
 }
 
 void mem_init(void)
@@ -95,5 +103,5 @@ void mem_init(void)
     pmu_init(addr, (mem_size - addr) / PAGE_SIZE);
 
     // 初始化内核分页
-    // page_init(mem_size);
+    page_init(mem_size);
 }

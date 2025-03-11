@@ -142,6 +142,7 @@ uint32_t pmu_alloc(void)
 {
     if (pmu.count == 0)
     {
+        panic("No free page");
         return 0;
     }
 

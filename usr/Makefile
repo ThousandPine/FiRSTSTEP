@@ -1,5 +1,5 @@
-OBJDIR := ../obj/kernel
-TARGET := $(OBJDIR)/kernel
+OBJDIR := ../obj/usr
+TARGET := $(OBJDIR)/hello.bin
 LIBDIR := ../lib
 LIBNAME := libmylib.a
 
@@ -28,22 +28,15 @@ LDFLAGS := -m elf_i386 			# 指定生成 32 位 ELF 格式的可执行文件，�
 LDFLAGS += -T link.ld  			# 使用 link.ld 链接脚本
 LDFLAGS += -L $(LIBDIR)  		# 指定静态链接库所在目录为 ../lib
 LDFLAGS += -l :$(LIBNAME)  		# 指定静态链接库名称，使用文件全名要加冒号 : ，格式参考 ld 的 -l 参数说明
-LDFLAGS += -e _start			# 指定内核入口为 _start
 # 上面的注释对齐带上了很多空格，要用 strip 去除多余空格
 LDFLAGS := $(strip ${LDFLAGS})
 
 
-SRC_S := $(wildcard *.S)                # 当前目录下所有的 .S 源文件
 SRC_C := $(wildcard *.c)                # 当前目录下所有的 .c 源文件
-OBJ := $(SRC_S:%.S=$(OBJDIR)/%.o)		# 将 SRC 中的 .S 文件扩展名替换为 .o，生成目标文件列表 OBJ
-OBJ += $(SRC_C:%.c=$(OBJDIR)/%.o)		# 将 SRC 中的 .c 文件扩展名替换为 .o，生成目标文件列表 OBJ
+OBJ := $(SRC_C:%.c=$(OBJDIR)/%.o)		# 将 SRC 中的 .c 文件扩展名替换为 .o，生成目标文件列表 OBJ
 DEPS := $(OBJ:%.o=$(OBJDIR)/%.d)      	# 为 .o 文件生成依赖文件 .d，依赖文件存放在 $(OBJDIR) 目录下
 
 all: $(TARGET)
-
-$(OBJDIR)/%.o: %.S
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.c
 	@mkdir -p $(@D)
@@ -55,7 +48,7 @@ $(TARGET): $(OBJ) $(LIBDIR)/$(LIBNAME)
 # 这与链接器从左到右依次解析符号的顺序有关，要让链接器先分析完 $(OBJ) 中缺失的符号，然后再从库文件链接需要的内容
 	$(LD) -o $@ $(OBJ) $(LDFLAGS)
 # 使用脚本安装内核文件到引导扇区根目录
-	./install_kernel.sh $@ $(IMG_PATH)
+	./install_user.sh $@ $(IMG_PATH)
 
 # 引用生成的 .d 依赖文件，使其能够判断头文件依赖
 -include $(DEPS)

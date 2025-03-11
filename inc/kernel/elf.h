@@ -1,6 +1,8 @@
 #pragma once
 
 #include "types.h"
+#include "kernel/page.h"
+#include "kernel/fs.h"
 
 #define ELF_MAGIC 0x464C457FU // 字符串 "\x7FELF" 的等价小端编码整数
 
@@ -55,3 +57,5 @@ typedef struct program_header
 #define PF_X 0x1 // Executable segment
 #define PF_W 0x2 // Writeable segment
 #define PF_R 0x4 // Readable segment
+
+uint32_t elf_loader(page_dir_entry *user_page_dir, file_struct *elf);

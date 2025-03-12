@@ -38,4 +38,6 @@ typedef struct page_tabel_entry
     uint32_t addr : 20;
 } __attribute__((packed)) page_tabel_entry;
 
+page_dir_entry *create_user_page_dir(void);
+uint32_t map_physical_page(page_dir_entry *page_dir, uint32_t phys_addr, uint8_t us, uint8_t rw);
 int map_physical_page_to_linear(page_dir_entry *page_dir, uint32_t phys_addr, uint32_t linear_addr, uint8_t us, uint8_t rw);

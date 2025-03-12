@@ -10,6 +10,61 @@
 static page_dir_entry kernel_page_dir[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 uint32_t kernel_area_page_dir_end_index = __UINT32_MAX__; // 在此之前的页表为内核专用区域，用户页表也要映射这些页表
 
+/**
+ * 创建用户页表
+ */
+page_dir_entry *create_user_page_dir(void)
+{
+    // 申请页内存
+    page_dir_entry *page_dir = (page_dir_entry *)pmu_alloc();
+    assert(page_dir != NULL);
+    memset(page_dir, 0, PAGE_SIZE);
+    // 复制内核区域页表
+    for(uint32_t i = 0; i < kernel_area_page_dir_end_index; i++)
+    {
+        page_dir[i] = kernel_page_dir[i];
+    }
+    return page_dir;
+}
+
+/**
+ * 映射物理地址到线性地址
+ * 
+ * @return 映射后的线性地址，0 表示失败
+ */
+uint32_t map_physical_page(page_dir_entry *page_dir, uint32_t phys_addr, uint8_t us, uint8_t rw)
+{
+    assert(page_dir != NULL);
+    assert(phys_addr != 0);
+    for (uint32_t i = kernel_area_page_dir_end_index; i < 1024; i++)
+    {
+        if (!page_dir[i].present)
+        {
+            uint32_t page_table_addr = pmu_alloc();
+            assert(page_table_addr != 0);
+            memset((void *)(page_table_addr), 0, PAGE_SIZE);
+            page_dir[i].addr = page_table_addr >> 12;
+            page_dir[i].present = 1;
+            page_dir[i].us = us;
+            page_dir[i].rw = 1; // 页目录始终读写，具体权限由页表控制
+        }
+        page_tabel_entry *page_table = (page_tabel_entry *)(page_dir[i].addr << 12);
+        for (uint32_t j = 0; j < 1024; j++)
+        {
+            if (!page_table[j].present)
+            {
+                page_table[j].addr = phys_addr >> 12;
+                page_table[j].present = 1;
+                page_table[j].us = us;
+                page_table[j].rw = rw;
+                // 返回对应的线性地址
+                return (i << 22) | (j << 12);
+            }
+        }
+    }
+    panic("No free page table entry");
+    return 0;
+}
 
 /**
  * 映射物理地址到指定线性地址

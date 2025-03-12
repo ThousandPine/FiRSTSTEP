@@ -35,8 +35,8 @@ LDFLAGS := $(strip ${LDFLAGS})
 
 SRC_S := $(wildcard *.S)                # 当前目录下所有的 .S 源文件
 SRC_C := $(wildcard *.c)                # 当前目录下所有的 .c 源文件
-OBJ := $(SRC_S:%.S=$(OBJDIR)/%.o)		# 将 SRC 中的 .c 文件扩展名替换为 .o，生成目标文件列表 OBJ
-OBJ += $(SRC_C:%.c=$(OBJDIR)/%.o)		# 将 SRC 中的 .S 文件扩展名替换为 .o，生成目标文件列表 OBJ
+OBJ := $(SRC_S:%.S=$(OBJDIR)/%.o)		# 将 SRC 中的 .S 文件扩展名替换为 .o，生成目标文件列表 OBJ
+OBJ += $(SRC_C:%.c=$(OBJDIR)/%.o)		# 将 SRC 中的 .c 文件扩展名替换为 .o，生成目标文件列表 OBJ
 DEPS := $(OBJ:%.o=$(OBJDIR)/%.d)      	# 为 .o 文件生成依赖文件 .d，依赖文件存放在 $(OBJDIR) 目录下
 
 all: $(TARGET)

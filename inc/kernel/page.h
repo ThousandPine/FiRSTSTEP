@@ -3,6 +3,10 @@
 #include "types.h"
 
 #define PAGE_SIZE (1U << 12) // 单个页面大小 4 KiB
+#define page_dir_index(addr) ((addr) >> 22)
+#define page_table_index(addr) (((addr) >> 12) & 0x3FF)
+
+extern uint32_t kernel_area_page_dir_end_index;
 
 typedef struct page_dir_entry
 {
@@ -33,3 +37,5 @@ typedef struct page_tabel_entry
     uint8_t avl : 3;      // 保留字段
     uint32_t addr : 20;
 } __attribute__((packed)) page_tabel_entry;
+
+int map_physical_page_to_linear(page_dir_entry *page_dir, uint32_t phys_addr, uint32_t linear_addr, uint8_t us, uint8_t rw);

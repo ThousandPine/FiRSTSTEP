@@ -14,9 +14,9 @@
  * TODO: 将程序相关的信息（页目录、程序入口）保存到类似 PCB 的结构体之中
  * 
  * @param elf ELF 文件
- * @return 0 成功，-1 失败
+ * @return 程序入口的虚拟地址，0 表示加载失败
  */
-int elf_loader(file_struct *elf)
+uint32_t elf_loader(page_dir_entry *user_page_dir, file_struct *elf)
 {
     elf_header elfhdr;
 
@@ -26,19 +26,8 @@ int elf_loader(file_struct *elf)
     if (elfhdr.e_magic != ELF_MAGIC)
     {
         DEBUGK("ELF file verification failed");
-        return -1;
+        return 0;
     }
-
-    // 申请一个页存储页目录
-    uint32_t page_dir_addr = pmu_alloc();
-    if (page_dir_addr == 0)
-    {
-        DEBUGK("Page alloc failed");
-        return -1;
-    }
-    page_dir_entry *page_dir = (page_dir_entry *)page_dir_addr;
-    // 初始化页目录
-    memset(page_dir, 0, PAGE_SIZE);
 
     // 加载程序段
     for (size_t i = 0; i < elfhdr.e_phnum; i++)
@@ -59,42 +48,10 @@ int elf_loader(file_struct *elf)
         size_t write_bytes = 0; // 记录已写入的数据量
         for (uint32_t v_addr = ph.p_vaddr, v_end = ph.p_vaddr + ph.p_memsz; v_addr < v_end;)
         {
-            // 创建页表
-            size_t pd_index = v_addr >> 22;
-            if (!page_dir[pd_index].present)
-            {
-                // 申请一个页用于存储页表
-                page_dir[pd_index].addr = pmu_alloc() >> 12;
-                if (page_dir[pd_index].addr == 0)
-                {
-                    DEBUGK("Page alloc failed");
-                    return -1;
-                }
-                // 设置属性
-                page_dir[pd_index].present = 1;
-                page_dir[pd_index].us = 1;
-                page_dir[pd_index].rw = 1; // 页目录的写权限始终启用，让页表控制某个页是否可写
-                page_dir[pd_index].ps = 0;
-            }
-            page_tabel_entry *page_table = (page_tabel_entry *)(page_dir[pd_index].addr << 12);
+            // 申请页内存并映射到线性地址
+            uint32_t p_addr = pmu_alloc();
+            map_physical_page_to_linear(user_page_dir, p_addr, v_addr, 1, ph.p_flags & PF_W);
 
-            // 创建页
-            size_t pt_index = (v_addr >> 12) & 0x3FF;
-            if (!page_table[pt_index].present)
-            {
-                // 申请内存页
-                page_table[pt_index].addr = pmu_alloc() >> 12;
-                if (page_table[pt_index].addr == 0)
-                {
-                    DEBUGK("Page alloc failed");
-                    return -1;
-                }
-                // 设置属性
-                page_table[pt_index].present = 1;
-                page_table[pt_index].us = 1;
-                page_table[pt_index].rw = (ph.p_flags & PF_W) ? 1 : 0;
-            }
-            uint32_t p_addr = page_table[pt_index].addr << 12;
 
             // 写入页内部分的数据
             off_t offset = v_addr % PAGE_SIZE;                           // 计算页内偏移
@@ -119,5 +76,5 @@ int elf_loader(file_struct *elf)
         }
     }
 
-    return 0;
+    return elfhdr.e_entry;
 }

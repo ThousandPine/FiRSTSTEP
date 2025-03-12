@@ -8,6 +8,51 @@
 #include "algobase.h"
 
 static page_dir_entry kernel_page_dir[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
+uint32_t kernel_area_page_dir_end_index = __UINT32_MAX__; // 在此之前的页表为内核专用区域，用户页表也要映射这些页表
+
+
+/**
+ * 映射物理地址到指定线性地址
+ * 
+ * @return 0 表示成功，-1 表示失败
+ */
+int map_physical_page_to_linear(page_dir_entry *page_dir, uint32_t phys_addr, uint32_t linear_addr, uint8_t us, uint8_t rw)
+{
+    assert(page_dir != NULL);
+    assert(phys_addr != 0);
+    assert(linear_addr != 0);
+
+    uint32_t pd_index = page_dir_index(linear_addr);
+    uint32_t pt_index = page_table_index(linear_addr);
+
+    if (pd_index < kernel_area_page_dir_end_index)
+    {
+        panic("Can't map page to kernel area %p", linear_addr);
+    }
+
+    if (!page_dir[pd_index].present)
+    {
+        uint32_t page_table_addr = pmu_alloc();
+        assert(page_table_addr != 0);
+        memset((void *)(page_table_addr), 0, PAGE_SIZE);
+        page_dir[pd_index].addr = page_table_addr >> 12;
+        page_dir[pd_index].present = 1;
+        page_dir[pd_index].us = us;
+        page_dir[pd_index].rw = 1; // 页目录始终读写，具体权限由页表控制
+    }
+    page_tabel_entry *page_table = (page_tabel_entry *)(page_dir[pd_index].addr << 12);
+    // 线性地址已被映射则返回错误
+    if (page_table[pt_index].present)
+    {
+        panic("Linear address %p has been mapped", linear_addr);
+        return -1;
+    }
+    page_table[pt_index].addr = phys_addr >> 12;
+    page_table[pt_index].present = 1;
+    page_table[pt_index].us = us;
+    page_table[pt_index].rw = rw;
+    return 0;
+}
 
 static size_t detect_memory(void)
 {
@@ -44,7 +89,7 @@ static void kernel_page_init(size_t mem_size)
     for (uint32_t addr = 0; addr < mem_size; addr += PAGE_SIZE)
     {
         // 计算地址对应的页目录下标
-        size_t pd_index = addr >> 22;
+        size_t pd_index = page_dir_index(addr);
         // 若不存在页表，则创建
         if (!kernel_page_dir[pd_index].present)
         {
@@ -61,7 +106,7 @@ static void kernel_page_init(size_t mem_size)
         // 找到页表
         page_tabel_entry *page_table = (page_tabel_entry *)(kernel_page_dir[pd_index].addr << 12);
         // 计算地址对应的页表下标
-        size_t pt_index = (addr >> 12) & 0x3FF;
+        size_t pt_index = page_table_index(addr);
         // 设置页属性
         page_table[pt_index].addr = addr >> 12;
         page_table[pt_index].present = 1;
@@ -86,7 +131,9 @@ static void page_enable(void)
  */
 static void page_init(size_t mem_size)
 {
-    kernel_page_inti(mem_size);
+    uint32_t kernel_addr_end = *(uint32_t *)P_KERNEL_ADDR_END;
+    kernel_area_page_dir_end_index = page_dir_index(kernel_addr_end) + !!page_table_index(kernel_addr_end);
+    kernel_page_init(mem_size);
     page_enable();
 }
 

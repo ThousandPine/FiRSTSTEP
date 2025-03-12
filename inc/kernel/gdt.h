@@ -2,12 +2,12 @@
 
 #include "types.h"
 
-#define GDT_ENTRY_COUNT 6 // GDT 条目数量
 #define KER_CODE_INDEX 1  // GDT 内核代码段索引
 #define KER_DATA_INDEX 2  // GDT 内核数据段索引
 #define USER_CODE_INDEX 3 // GDT 用户代码段索引
 #define USER_DATA_INDEX 4 // GDT 用户数据段索引
-#define TSS_INDEX 5       // TSS 在 GDT 的索引
+#define GDT_TSS_INDEX 5   // TSS 在 GDT 的起始索引
+#define NR_GDT_ENTRY 6    // GDT 条目数量
 
 #define DA_DR 0b1000  // 只读数据段
 #define DA_DRW 0b1001 // 可读写数据段
@@ -85,3 +85,4 @@ typedef struct tss_struct
 } __attribute__((packed)) tss_struct;
 
 void gdt_init(void);
+void set_tss(const tss_struct *tss);

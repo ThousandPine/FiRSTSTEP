@@ -1,8 +1,9 @@
+#include "kernel/x86.h"
 #include "kernel/gdt.h"
 #include "string.h"
 
-static segment_descriptor gdt[GDT_ENTRY_COUNT] = {0};
-static tss_struct tss = {0};
+static segment_descriptor _gdt[NR_GDT_ENTRY] = {0};
+static tss_struct _tss = {0};
 
 static void set_seg_descriptor(segment_descriptor *desc, uint32_t base, uint32_t limit, uint8_t dpl, uint8_t type)
 {
@@ -19,35 +20,24 @@ static void set_seg_descriptor(segment_descriptor *desc, uint32_t base, uint32_t
     desc->granularity = 1;
 }
 
-static void set_tss_descriptor(segment_descriptor *desc, uint32_t base, uint8_t dpl)
+void set_tss(const tss_struct *tss)
 {
-    uint32_t limit = sizeof(tss_struct) - 1;
-    desc->base_low = base & 0xFFFFFF;
-    desc->base_hi = (base >> 24) & 0xFF;
-    desc->lim_low = limit & 0xFFFF;
-    desc->lim_hi = (limit >> 16) & 0xF;
-    desc->dpl = dpl;
-    desc->type = DA_TSS;
-    desc->accessed = 1;
-    desc->present = 1;
-    desc->m32 = 1;
-    desc->long_mode = 0;
-    desc->granularity = 0;
+    _tss = *tss;
 }
 
 void gdt_init(void)
 {
-    memset(gdt, 0, sizeof(*gdt));                                     // NULL Segment
-    set_seg_descriptor(gdt + KER_CODE_INDEX, 0, 0xFFFFF, 0, DA_CR);   // Kernel Code Segment
-    set_seg_descriptor(gdt + KER_DATA_INDEX, 0, 0xFFFFF, 0, DA_DRW);  // Kernel Data Segment
-    set_seg_descriptor(gdt + USER_CODE_INDEX, 0, 0xFFFFF, 3, DA_CR);  // User Code Segment
-    set_seg_descriptor(gdt + USER_DATA_INDEX, 0, 0xFFFFF, 3, DA_DRW); // User Data Segment
-    set_tss_descriptor(gdt + TSS_INDEX, (uint32_t)&tss, 0);           // TSS
+    memset(_gdt, 0, sizeof(*_gdt));                                                // NULL Segment
+    set_seg_descriptor(_gdt + KER_CODE_INDEX, 0, 0xFFFFF, 0, DA_CR);               // Kernel Code Segment
+    set_seg_descriptor(_gdt + KER_DATA_INDEX, 0, 0xFFFFF, 0, DA_DRW);              // Kernel Data Segment
+    set_seg_descriptor(_gdt + USER_CODE_INDEX, 0, 0xFFFFF, 3, DA_CR);              // User Code Segment
+    set_seg_descriptor(_gdt + USER_DATA_INDEX, 0, 0xFFFFF, 3, DA_DRW);             // User Data Segment
+    set_seg_descriptor(_gdt + GDT_TSS_INDEX, (uint32_t)&_tss, 0xFFFFF, 0, DA_TSS); // TSS
 
     // Set GDTR
     gdt_descriptor gdtr = {
-        .size = sizeof(gdt) - 1,
-        .offset = (uint32_t)gdt,
+        .size = sizeof(_gdt) - 1,
+        .offset = (uint32_t)_gdt,
     };
 
     asm volatile(
@@ -67,10 +57,5 @@ void gdt_init(void)
         : "memory", "ax");
 
     // Set TR (TSS)
-    asm volatile(
-        "ltr %0\n"
-        :
-        : "r"(segment_selector(TSS_INDEX, 0, 0))
-        : "memory"
-    );
+    ltr(segment_selector(GDT_TSS_INDEX, 0, 0));
 }

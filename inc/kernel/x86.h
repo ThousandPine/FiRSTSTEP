@@ -91,3 +91,9 @@ static inline void cli(void)
 {
     asm volatile("cli" ::);
 }
+
+__attribute__((always_inline))
+static inline void ltr(uint32_t value)
+{
+    asm volatile("ltr %0" : : "r"(value) : "memory");
+}

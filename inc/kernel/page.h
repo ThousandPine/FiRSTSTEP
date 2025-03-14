@@ -41,3 +41,5 @@ typedef struct page_tabel_entry
 page_dir_entry *create_user_page_dir(void);
 uint32_t map_physical_page(page_dir_entry *page_dir, uint32_t phys_addr, uint8_t us, uint8_t rw);
 int map_physical_page_to_linear(page_dir_entry *page_dir, uint32_t phys_addr, uint32_t linear_addr, uint8_t us, uint8_t rw);
+void switch_to_kernel_page(void);
+void switch_to_user_page(const page_dir_entry *user_page_dir);

@@ -97,3 +97,17 @@ static inline void ltr(uint32_t value)
 {
     asm volatile("ltr %0" : : "r"(value) : "memory");
 }
+
+__attribute__((always_inline))
+static inline uint32_t get_eflags(void)
+{
+    uint32_t eflags;
+    asm volatile (
+        "pushf\n\t"
+        "pop %0"
+        : "=r"(eflags)
+        : 
+        : "cc"
+    );
+    return eflags;
+}

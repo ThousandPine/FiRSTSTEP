@@ -10,6 +10,16 @@
 static page_dir_entry kernel_page_dir[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 uint32_t kernel_area_page_dir_end_index = __UINT32_MAX__; // 在此之前的页表为内核专用区域，用户页表也要映射这些页表
 
+void switch_to_kernel_page(void)
+{
+    set_cr3((uint32_t)kernel_page_dir);
+}
+
+void switch_to_user_page(const page_dir_entry *user_page_dir)
+{
+    set_cr3((uint32_t)user_page_dir);
+}
+
 /**
  * 创建用户页表
  */

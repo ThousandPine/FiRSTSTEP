@@ -21,8 +21,18 @@ _start:
 isr_timer:
     xchgw   %bx, %bx
     pusha
-    push    %esp
+    push    %ds
+    push    %es
+    push    %fs
+    push    %gs
+
+    push    %esp            # 当前栈指针作为函数参数压栈
     call    timer_handler
     add     $4, %esp
+
+    pop     %gs
+    pop     %fs
+    pop     %es
+    pop     %ds
     popa
     iret

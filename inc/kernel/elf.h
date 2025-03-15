@@ -58,4 +58,4 @@ typedef struct program_header
 #define PF_W 0x2 // Writeable segment
 #define PF_R 0x4 // Readable segment
 
-uint32_t elf_loader(page_dir_entry *user_page_dir, file_struct *elf);
+uint32_t elf_loader(page_dir_entry *user_page_dir, const char *file_path);

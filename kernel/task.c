@@ -72,10 +72,14 @@ task_struct* create_task_from_elf(const char *file_path)
         return NULL;
     }
     // 加载 ELF 文件
-    file_struct file;
-    file_open(file_path, &file);
+    uint32_t entry = elf_loader(task->page_dir, file_path);
+    if (entry == 0)
+    {
+        DEBUGK("load ELF file failed");
+        return NULL;
+    }
     // 设置用户程序入口
-    task->interrupt_frame->eip = elf_loader(task->page_dir, &file);
+    task->interrupt_frame->eip = entry;
 
     return task;
 }

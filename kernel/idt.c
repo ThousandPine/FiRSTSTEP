@@ -56,6 +56,9 @@ void idt_init()
         set_gate(i, GT_INT, &isr_default);
     }
 
+    // 设置时钟中断服务
+    set_gate(IDT_PIC1_OFFSET, GT_INT, &isr_timer);
+
     // 设置 IDTR
     idt_descriptor idtr = {
         .size = sizeof(idt) - 1,

@@ -1,7 +1,7 @@
 #define STACK_SIZE 4096
 
-.global _start
-.extern gdt_init, init
+.global _start, isr_timer
+.extern gdt_init, init, timer_handler
 
 # 在 .bss 段定义栈空间
 .section .bss
@@ -9,10 +9,20 @@
 
 .section .text
 .code32
-    _start:
+# 内核入口
+_start:
     cli
     mov     $(stack + STACK_SIZE), %esp # 重新设置栈指针
     call    gdt_init
     call    init
     hlt
 
+# 时钟中断服务
+isr_timer:
+    xchgw   %bx, %bx
+    pusha
+    push    %esp
+    call    timer_handler
+    add     $4, %esp
+    popa
+    iret

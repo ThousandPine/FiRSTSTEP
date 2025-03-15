@@ -52,10 +52,10 @@ void gdt_init(void)
         "mov %%ax, %%ss\n"
         : // 无输出
         : [gdtr] "m"(gdtr),
-          [data_seg] "i"(segment_selector(KER_DATA_INDEX, 0, 0)),
-          [code_seg] "i"(segment_selector(KER_CODE_INDEX, 0, 0))
+          [data_seg] "i"(KER_DATA_SELECTOR),
+          [code_seg] "i"(KER_CODE_SELECTOR)
         : "memory", "ax");
 
     // Set TR (TSS)
-    ltr(segment_selector(GDT_TSS_INDEX, 0, 0));
+    ltr(GDT_TSS_SELECTOR);
 }

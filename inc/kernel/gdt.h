@@ -54,6 +54,11 @@ typedef struct gdt_descriptor
  * @param ti 0 表示 GDT，1 表示 LDT
  */
 #define segment_selector(index, rpl, ti) (uint16_t)(((rpl) & 0x3) | (((ti) << 2) & 0x4) | (((index) << 3) & 0xFFF8))
+#define KER_CODE_SELECTOR segment_selector(KER_CODE_INDEX, 0, 0)
+#define KER_DATA_SELECTOR segment_selector(KER_DATA_INDEX, 0, 0)
+#define USER_CODE_SELECTOR segment_selector(USER_CODE_INDEX, 3, 0)
+#define USER_DATA_SELECTOR segment_selector(USER_DATA_INDEX, 3, 0)
+#define GDT_TSS_SELECTOR segment_selector(GDT_TSS_INDEX, 0, 0)
 
 // TSS 结构
 typedef struct tss_struct

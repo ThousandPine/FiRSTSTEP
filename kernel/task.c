@@ -92,7 +92,6 @@ void switch_to_task(task_struct *task)
     set_tss(&task->tss);
     // 切换页目录
     switch_to_user_page(task->page_dir);
-    BMB;
     // 切换上下文
     asm volatile(
         "mov %0, %%esp\n"

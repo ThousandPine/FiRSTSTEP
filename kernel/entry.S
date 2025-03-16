@@ -19,7 +19,6 @@ _start:
 
 # 时钟中断服务
 isr_timer:
-    xchgw   %bx, %bx
     pusha
     push    %ds
     push    %es

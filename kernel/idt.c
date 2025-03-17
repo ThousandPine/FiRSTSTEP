@@ -58,6 +58,11 @@ void idt_init()
 
     // 设置时钟中断服务
     set_gate(IDT_PIC1_OFFSET, GT_INT, &isr_timer);
+    
+    // 设置系统调用中断
+    set_gate(0x80, GT_INT, &isr_syscall);
+    // 由于是用户态主动调用，所以要将 DPL 设为 3
+    idt[0x80].dpl = 3;
 
     // 设置 IDTR
     idt_descriptor idtr = {

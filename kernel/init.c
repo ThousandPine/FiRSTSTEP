@@ -6,6 +6,7 @@ void mem_init(void);
 void fs_init(void);
 void idt_init(void);
 void pic_init(void);
+void syscall_init(void);
 void task_init(void);
 
 int init(void)
@@ -17,6 +18,7 @@ int init(void)
     sti();
 
     mem_init();
+    syscall_init();
 
     fs_init();
 

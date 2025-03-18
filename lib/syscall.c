@@ -3,7 +3,8 @@
 
 int syscall(int syscall_no, ...)
 {
-    va_list args = va_start(syscall_no);
+    va_list args;
+    va_start(args, syscall_no);
 
     int32_t arg1 = va_arg(args, int32_t);
     int32_t arg2 = va_arg(args, int32_t);

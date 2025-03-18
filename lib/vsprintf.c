@@ -337,7 +337,8 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 int sprintf(char *buf, const char *fmt, ...)
 {
     int n = 0;
-    va_list args = va_start(fmt);
+    va_list args;
+    va_start(args, fmt);
     n = vsprintf(buf, fmt, args);
     va_end(args);
     return n;

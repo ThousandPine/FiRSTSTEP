@@ -30,7 +30,8 @@ void panic(const char *fmt, ...)
 {
     printk("\n################ PANIC ################\n");
 
-    va_list args = va_start(fmt);
+    va_list args;
+    va_start(args, fmt);
     vprintk(fmt, args);
     va_end(args);
 
@@ -47,7 +48,8 @@ void debug_print(const char *file, int line, const char *fmt, ...)
 {
     printk("[%s] [%d] ", file, line);
 
-    va_list args = va_start(fmt);
+    va_list args;
+    va_start(args, fmt);
     vprintk(fmt, args);
     va_end(args);
 

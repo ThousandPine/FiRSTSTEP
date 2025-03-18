@@ -32,7 +32,7 @@ typedef int8_t *va_list;
  * 因此，想要获取调用栈中 fmt 下一个参数的地址
  * 只需要在 fmt 地址基础上加上 fmt 在栈中大小的偏移即可
  */
-#define va_start(fmt) ((va_list)(&fmt) + va_rounded_size(fmt))
+#define va_start(args, fmt) (args = ((va_list)(&fmt) + va_rounded_size(fmt)))
 
 /**
  * 读取下一个参数并移位指针

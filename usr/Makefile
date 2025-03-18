@@ -1,5 +1,5 @@
 OBJDIR := ../obj/usr
-TARGET := $(OBJDIR)/hello.bin
+TARGET := $(OBJDIR)/init.exe
 LIBDIR := ../lib
 LIBNAME := libmylib.a
 

@@ -109,7 +109,7 @@ void switch_to_task(task_struct *task)
 void task_init(void)
 {
     // 创建首个任务
-    task_struct *first_task = create_task_from_elf("/hello.bin");
+    task_struct *first_task = create_task_from_elf("/init.exe");
     
     // 初始化调度器
     scheduler_init(first_task);

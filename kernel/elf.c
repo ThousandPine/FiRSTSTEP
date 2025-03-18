@@ -57,7 +57,7 @@ uint32_t elf_loader(page_dir_entry *user_page_dir, const char *file_path)
         {
             // 申请页内存并映射到线性地址
             uint32_t p_addr = pmu_alloc();
-            map_physical_page_to_linear(user_page_dir, p_addr, v_addr, 1, ph.p_flags & PF_W);
+            map_physical_page_to_linear(user_page_dir, p_addr, v_addr, 1, (ph.p_flags & PF_W) != 0);
 
 
             // 写入页内部分的数据

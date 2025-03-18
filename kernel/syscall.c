@@ -1,6 +1,8 @@
 #include "kernel/syscall.h"
 #include "kernel/task.h"
 #include "kernel/kernel.h"
+#include "kernel/tty.h"
+#include "stdio.h"
 
 static void* syscall_table[NR_SYSCALL];
 
@@ -13,6 +15,17 @@ static int sys_test(void)
 {
     printk("test syscall!\n");
     return 2333;
+}
+
+static int sys_write(uint32_t fd, const void *buf, uint32_t count)
+{
+    if (fd != STDOUT)
+    {
+        return -1;
+    }
+
+    tty_write(buf, count);
+    return count;
 }
 
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)
@@ -33,4 +46,5 @@ void syscall_init(void)
         syscall_table[i] = sys_default;
     }
     syscall_table[SYS_NR_TEST] = sys_test;
+    syscall_table[SYS_NR_WRITE] = sys_write;
 }

@@ -1,5 +1,6 @@
 #include "types.h"
 #include "varg.h"
+#include "kernel/syscall.h"
 
 int syscall(int syscall_no, ...)
 {
@@ -21,4 +22,9 @@ int syscall(int syscall_no, ...)
         : "memory"
     );
     return ret;
+}
+
+int write(int fd, const void *buf, int count)
+{
+    return syscall(SYS_NR_WRITE, fd, buf, count);
 }

@@ -33,3 +33,7 @@ int fork(void)
 {
     return syscall(SYS_NR_FORK);
 }
+pid_t getpid(void)
+{
+    return syscall(SYS_NR_GETPID);
+}

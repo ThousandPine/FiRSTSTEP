@@ -13,3 +13,4 @@ typedef unsigned long long uint64_t;
 
 typedef uint32_t size_t;
 typedef uint32_t off_t;
+typedef uint32_t pid_t;

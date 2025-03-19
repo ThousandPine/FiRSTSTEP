@@ -44,6 +44,15 @@ static int sys_fork(void)
     return new_task->pid;
 }
 
+static pid_t sys_getpid(void)
+{
+    if (current_task == NULL)
+    {
+        return -1;
+    }
+    return current_task->pid;
+}
+
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)
 {
     if (syscall_no >= NR_SYSCALL)
@@ -70,4 +79,5 @@ void syscall_init(void)
     syscall_table[SYS_NR_TEST] = sys_test;
     syscall_table[SYS_NR_WRITE] = sys_write;
     syscall_table[SYS_NR_FORK] = sys_fork;
+    syscall_table[SYS_NR_GETPID] = sys_getpid;
 }

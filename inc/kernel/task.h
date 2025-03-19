@@ -34,7 +34,7 @@ enum task_state
 typedef struct task_struct
 {
     tss_struct tss;
-    uint32_t pid;
+    pid_t pid;
     uint32_t state;
     interrupt_frame *interrupt_frame;
     page_dir_entry *page_dir;

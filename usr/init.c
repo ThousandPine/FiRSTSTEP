@@ -2,11 +2,12 @@
 #include "stdio.h"
 #include "unistd.h"
 
-int main(void)
+void fork_func(int i)
 {
-    BMB;
-    BMB;
-    int n = printf("Hello, world!\n");
+    if (i <= 0)
+    {
+        return;
+    }
     int pid = fork();
     if (pid == -1)
     {
@@ -14,12 +15,21 @@ int main(void)
     }
     else if (pid == 0)
     {
-        printf("I am child\n");
+        printf("I am child %d\n", getpid());
+        fork_func(i - 1);
     }
     else
     {
-        printf("I am parent, child pid = %d\n", pid);
+        printf("I am parent %d, child pid = %d\n", getpid(), pid);
     }
+}
+
+int main(void)
+{
+    BMB;
+    BMB;
+    int n = printf("Hello, world!\n");
+    fork_func(5);
     while(1)
     {
     }

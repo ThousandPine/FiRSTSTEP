@@ -36,7 +36,6 @@ typedef struct task_struct
     tss_struct tss;
     uint32_t pid;
     uint32_t state;
-    uint32_t usr_stack_top;
     interrupt_frame *interrupt_frame;
     page_dir_entry *page_dir;
     struct task_struct* prev;
@@ -51,3 +50,4 @@ typedef union task_union
 
 task_struct* create_task_from_elf(const char *file_path);
 void switch_to_task(task_struct *task);
+task_struct* copy_task(const task_struct *task);

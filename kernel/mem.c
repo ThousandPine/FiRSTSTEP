@@ -10,14 +10,9 @@
 static page_dir_entry kernel_page_dir[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 uint32_t kernel_area_page_dir_end_index = __UINT32_MAX__; // 在此之前的页表为内核专用区域，用户页表也要映射这些页表
 
-void switch_to_kernel_page(void)
+void switch_page_dir(const page_dir_entry *page_dir)
 {
-    set_cr3((uint32_t)kernel_page_dir);
-}
-
-void switch_to_user_page(const page_dir_entry *user_page_dir)
-{
-    set_cr3((uint32_t)user_page_dir);
+    set_cr3((uint32_t)page_dir);
 }
 
 /**
@@ -117,6 +112,65 @@ int map_physical_page_to_linear(page_dir_entry *page_dir, uint32_t phys_addr, ui
     page_table[pt_index].us = us;
     page_table[pt_index].rw = rw;
     return 0;
+}
+
+/**
+ * 复制页目录和映射的内存数据
+ */
+int copy_page_dir_and_memory(page_dir_entry *dst_page_dir, const page_dir_entry *src_page_dir)
+{
+    // 保存当前页目录，切换到内核页目录
+    page_dir_entry *stashed_user_page_dir = NULL;
+    if (get_cr3() != kernel_page_dir)
+    {
+        stashed_user_page_dir = (page_dir_entry *)get_cr3();
+        switch_page_dir(kernel_page_dir);
+    }
+
+    for (uint32_t i = kernel_area_page_dir_end_index; i < 1024; i++)
+    {
+        if (!src_page_dir[i].present)
+        {
+            continue;
+        }
+
+        // 复制页表
+        page_tabel_entry *src_page_table = (page_tabel_entry *)(src_page_dir[i].addr << 12);
+        page_tabel_entry *dst_page_table = (page_tabel_entry *)pmu_alloc();
+        if (dst_page_table == NULL)
+        {
+            DEBUGK("Failed to alloc page table");
+            return -1;
+        }
+        dst_page_dir[i] = src_page_dir[i];
+        dst_page_dir[i].addr = (uint32_t)dst_page_table >> 12;
+
+        for (uint32_t j = 0; j < 1024; j++)
+        {
+            if (!src_page_table[j].present)
+            {
+                continue;
+            }
+
+            // 复制页面
+            uint32_t src_page_addr = src_page_table->addr << 12;
+            uint32_t dst_page_addr = pmu_alloc();
+            if (dst_page_addr == 0)
+            {
+                DEBUGK("Failed to alloc page");
+                return -1;
+            }
+            memcpy((void *)dst_page_addr, (void *)src_page_addr, PAGE_SIZE);
+            dst_page_table[j] = src_page_table[j];
+            dst_page_table[j].addr = dst_page_addr >> 12;
+        }
+    }
+
+    // 恢复页目录
+    if (stashed_user_page_dir != NULL)
+    {
+        switch_page_dir(stashed_user_page_dir);
+    }
 }
 
 static size_t detect_memory(void)

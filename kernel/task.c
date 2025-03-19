@@ -25,6 +25,25 @@ static task_union* get_free_task_union(void)
     return NULL;
 }
 
+static int set_free_task_union(void *ptr)
+{
+    for (int i = 0; i < NR_TASKS; i++)
+    {
+        if (ptr == &task_unions[i])
+        {
+            if (is_used[i] == 0)
+            {
+                DEBUGK("task union is already free");
+                return -1;
+            }
+            is_used[i] = 0;
+            return 0;
+        }
+    }
+    DEBUGK("invalid task union");
+    return -1;
+}
+
 static task_struct* create_task(uint32_t entry, uint32_t code_selector, uint32_t data_selector)
 {
     static int _pid = 0;
@@ -45,14 +64,14 @@ static task_struct* create_task(uint32_t entry, uint32_t code_selector, uint32_t
     task_union->task.page_dir = create_user_page_dir();
     // 初始化进程用户态栈
     uint32_t stack_page = pmu_alloc();
-    task_union->task.usr_stack_top = PAGE_SIZE + map_physical_page(task_union->task.page_dir, stack_page, 1, 1);
+    uint32_t maped_usr_stack_top = PAGE_SIZE + map_physical_page(task_union->task.page_dir, stack_page, 1, 1);
     // 初始化中断栈帧，模拟中断调用
     // NOTE: 不能将中断栈帧指向 kernel_stack 的开始处，
     //       因为这是一个 union，修改 kernel_stack 前面的部分会覆盖 task 结构体
     task_union->task.interrupt_frame = (interrupt_frame *)(task_union->kernel_stack + PAGE_SIZE - sizeof(interrupt_frame));
     memset(task_union->task.interrupt_frame, 0, sizeof(interrupt_frame));
     task_union->task.interrupt_frame->ss = data_selector;
-    task_union->task.interrupt_frame->esp = task_union->task.usr_stack_top;
+    task_union->task.interrupt_frame->esp = maped_usr_stack_top;
     task_union->task.interrupt_frame->eflags = get_eflags();
     task_union->task.interrupt_frame->cs = code_selector;
     task_union->task.interrupt_frame->eip = entry;
@@ -84,6 +103,24 @@ task_struct* create_task_from_elf(const char *file_path)
     return task;
 }
 
+task_struct* copy_task(const task_struct *task)
+{
+    task_struct* new_task = create_task(0, USER_CODE_SELECTOR, USER_DATA_SELECTOR);
+    if (task == NULL)
+    {
+        return NULL;
+    }
+
+    *new_task->interrupt_frame = *task->interrupt_frame;
+    if(copy_page_dir_and_memory(new_task->page_dir, task->page_dir) < 0)
+    {
+        DEBUGK("copy task failed");
+        set_free_task_union(new_task);
+        return NULL;
+    }
+    return new_task;
+}
+
 void switch_to_task(task_struct *task)
 {
     DEBUGK("switch to task %d", task->pid);
@@ -91,7 +128,7 @@ void switch_to_task(task_struct *task)
     // 切换 TSS
     set_tss(&task->tss);
     // 切换页目录
-    switch_to_user_page(task->page_dir);
+    switch_page_dir(task->page_dir);
     // 切换上下文
     asm volatile(
         "mov %0, %%esp\n"

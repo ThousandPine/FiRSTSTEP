@@ -28,3 +28,8 @@ int write(int fd, const void *buf, int count)
 {
     return syscall(SYS_NR_WRITE, fd, buf, count);
 }
+
+int fork(void)
+{
+    return syscall(SYS_NR_FORK);
+}

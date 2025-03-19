@@ -2,6 +2,8 @@
 #include "kernel/task.h"
 #include "kernel/kernel.h"
 #include "kernel/tty.h"
+#include "kernel/scheduler.h"
+#include "kernel/task.h"
 #include "stdio.h"
 
 static void* syscall_table[NR_SYSCALL];
@@ -28,11 +30,31 @@ static int sys_write(uint32_t fd, const void *buf, uint32_t count)
     return count;
 }
 
+static int sys_fork(void)
+{
+    // TODO: 添加进程父子关系
+    task_struct *new_task = copy_task(current_task);
+    if (new_task == NULL)
+    {
+        return -1;
+    }
+
+    new_task->interrupt_frame->eax = 0;
+    scheduler_add_task(new_task);
+    return new_task->pid;
+}
+
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)
 {
     if (syscall_no >= NR_SYSCALL)
     {
         panic("syscall_no %d out of boundary %d", syscall_no, NR_SYSCALL);
+    }
+
+    // 保存当前任务的中断栈帧
+    if (current_task != NULL)
+    {
+        current_task->interrupt_frame = frame;
     }
 
     // 调用对应系统调用函数，返回值保存在 eax 寄存器
@@ -47,4 +69,5 @@ void syscall_init(void)
     }
     syscall_table[SYS_NR_TEST] = sys_test;
     syscall_table[SYS_NR_WRITE] = sys_write;
+    syscall_table[SYS_NR_FORK] = sys_fork;
 }

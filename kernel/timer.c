@@ -6,7 +6,7 @@
 #define PIT_CTRL 0x43
 #define PIT_CH0 0x40
 #define OSC_FREQ 1193180 // PIT晶振频率
-#define HZ 1             // 时钟中断频率
+#define HZ 20            // 时钟中断频率
 
 void start_timer(void)
 {
@@ -25,13 +25,9 @@ void start_timer(void)
 void timer_handler(interrupt_frame *frame)
 {
     DEBUGK("timer interrupt");
-
+    
+    // 切换任务前，需要发送 EOI 通知时钟中断处理完毕，否则无法开始下一次时钟中断
+    pic_send_eoi(0);
     // 执行调度切换任务
     schedule(frame);
-}
-
-void handled_timer(void)
-{
-    // 发送中断处理结束信号
-    pic_send_eoi(0);
 }

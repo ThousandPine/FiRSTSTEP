@@ -37,3 +37,7 @@ pid_t getpid(void)
 {
     return syscall(SYS_NR_GETPID);
 }
+void exit(int status)
+{
+    syscall(SYS_NR_EXIT, status);
+}

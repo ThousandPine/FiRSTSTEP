@@ -6,3 +6,4 @@ int syscall(int syscall_no, ...);
 int write(int fd, const void *buf, int count);
 int fork(void);
 pid_t getpid(void);
+void exit(int status);

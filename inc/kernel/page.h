@@ -43,3 +43,4 @@ uint32_t map_physical_page(page_dir_entry *page_dir, uint32_t phys_addr, uint8_t
 int map_physical_page_to_linear(page_dir_entry *page_dir, uint32_t phys_addr, uint32_t linear_addr, uint8_t us, uint8_t rw);
 void switch_page_dir(const page_dir_entry *user_page_dir);
 int copy_page_dir_and_memory(page_dir_entry *dst_page_dir, const page_dir_entry *src_page_dir);
+void free_user_page_dir(page_dir_entry *page_dir);

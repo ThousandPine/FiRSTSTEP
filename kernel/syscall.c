@@ -32,25 +32,47 @@ static int sys_write(uint32_t fd, const void *buf, uint32_t count)
 
 static int sys_fork(void)
 {
-    // TODO: 添加进程父子关系
-    task_struct *new_task = copy_task(current_task);
+    task_struct *new_task = fork_task(running_task());
     if (new_task == NULL)
     {
         return -1;
     }
 
+    // 新进程的 fork() 返回值是 0
     new_task->interrupt_frame->eax = 0;
-    scheduler_add_task(new_task);
+
+    // 将新进程加入调度队列
+    switch_task_state(new_task, TASK_READY);
+
     return new_task->pid;
 }
 
 static pid_t sys_getpid(void)
 {
-    if (current_task == NULL)
+    return running_task()->pid;
+}
+
+static void sys_exit(int exit_code)
+{
+    task_struct *task = running_task();
+    if (task == NULL)
     {
-        return -1;
+        panic("running_task is NULL, exit failed");
+        return;
     }
-    return current_task->pid;
+
+    DEBUGK("sys_exit: task %d exit_code %d", task->pid, exit_code);
+
+    // 设置为僵尸进程
+    switch_task_state(task, TASK_ZOMBIE);
+    // 回收相关资源
+    task_exit(task, exit_code);
+    
+    // 切换到下一个任务
+    schedule(NULL);
+
+    // 防止返回
+    panic("sys_exit: no task to switch");
 }
 
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)
@@ -58,12 +80,6 @@ void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t
     if (syscall_no >= NR_SYSCALL)
     {
         panic("syscall_no %d out of boundary %d", syscall_no, NR_SYSCALL);
-    }
-
-    // 保存当前任务的中断栈帧
-    if (current_task != NULL)
-    {
-        current_task->interrupt_frame = frame;
     }
 
     // 调用对应系统调用函数，返回值保存在 eax 寄存器
@@ -80,4 +96,5 @@ void syscall_init(void)
     syscall_table[SYS_NR_WRITE] = sys_write;
     syscall_table[SYS_NR_FORK] = sys_fork;
     syscall_table[SYS_NR_GETPID] = sys_getpid;
+    syscall_table[SYS_NR_EXIT] = sys_exit;
 }

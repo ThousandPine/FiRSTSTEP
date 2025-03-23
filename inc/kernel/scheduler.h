@@ -3,8 +3,7 @@
 #include "types.h"
 #include "kernel/task.h"
 
-extern task_struct *current_task;
-
-void scheduler_init(task_struct *task);
+void scheduler_init(task_struct *init_task);
 void schedule(interrupt_frame *frame);
-void scheduler_add_task(task_struct *task);
+task_struct *running_task(void);
+void switch_task_state(task_struct *task, enum task_state state);

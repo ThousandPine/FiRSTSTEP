@@ -121,7 +121,7 @@ int copy_page_dir_and_memory(page_dir_entry *dst_page_dir, const page_dir_entry 
 {
     // 保存当前页目录，切换到内核页目录
     page_dir_entry *stashed_user_page_dir = NULL;
-    if (get_cr3() != kernel_page_dir)
+    if (get_cr3() != (uint32_t)kernel_page_dir)
     {
         stashed_user_page_dir = (page_dir_entry *)get_cr3();
         switch_page_dir(kernel_page_dir);
@@ -171,6 +171,44 @@ int copy_page_dir_and_memory(page_dir_entry *dst_page_dir, const page_dir_entry 
     {
         switch_page_dir(stashed_user_page_dir);
     }
+    return 0;
+}
+
+void free_user_page_dir(page_dir_entry *page_dir)
+{
+    assert(page_dir != NULL);
+    assert(page_dir != kernel_page_dir);
+
+    // 如果释放的是当前使用的页目录，则先切换到内核页目录
+    if (get_cr3() == (uint32_t)page_dir)
+    {
+        switch_page_dir(kernel_page_dir);
+    }
+
+    // 遍历页目录条目
+    for (uint32_t i = kernel_area_page_dir_end_index; i < 1024; i++)
+    {
+        // 找到用户页表条目
+        if (page_dir[i].present && page_dir[i].us)
+        {
+            // 遍历页表条目
+            page_tabel_entry *page_table = (page_tabel_entry *)(page_dir[i].addr << 12);
+            for (uint32_t j = 0; j < 1024; j++)
+            {
+                // 找到用户的内存页
+                if (page_table[j].present && page_dir[i].us)
+                {
+                    // 回收页内存
+                    pmu_free(page_table[j].addr << 12);
+                }
+            }
+            // 回收页表
+            pmu_free((uint32_t)page_table);
+        }
+    }
+
+    // 回收页目录
+    pmu_free((uint32_t)page_dir);
 }
 
 static size_t detect_memory(void)

@@ -161,7 +161,7 @@ void setupmain(void)
         for (uint32_t i = 0; i < bpb.sec_per_clus; i++)
         {
             // 防止写入到硬件映射内存
-            if (elf_load_ptr + SECTSIZE - 1 >= HW_MAP_START_ADDR)
+            if ((uint32_t)elf_load_ptr + SECTSIZE - 1 >= HW_MAP_START_ADDR)
             {
                 error("Cannot write to hardware mapped address");
             }

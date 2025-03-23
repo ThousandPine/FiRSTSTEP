@@ -9,7 +9,7 @@ void pic_init(void);
 void syscall_init(void);
 void task_init(void);
 
-int init(void)
+void init(void)
 {
     tty_init();
 

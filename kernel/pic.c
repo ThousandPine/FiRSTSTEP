@@ -105,3 +105,22 @@ void pic_disable_irq(uint8_t irq)
     uint8_t value = inb(port) | (1 << irq);
     outb(port, value);
 }
+
+// “虚假 IRQ 中断”处理服务
+__attribute__((naked)) void isr_spurious_irq(void)
+{
+    // 当出现 IRQ 触发失败的情况时，PIC 告诉 CPU 一个虚假的 IRQ 中断
+    // 假 IRQ 对应 PIC 芯片的最低优先级中断号（主 PIC 为 IRQ 7，从 PIC 为 IRQ 15）
+    // 关于虚假 IRQ 中断的说明可以参考：
+    // https://wiki.osdev.org/8259_PIC#Spurious_IRQs
+    //
+    // 目前触发虚假 IRQ 中断的情况一般是，在执行系统调用时中断门自动清空 IF 位，
+    // 导致期间的时钟中断 IRQ0 没能正常响应。
+    // 直到 IRET 恢复 IF 位，PIC 就会立刻触发一次 IRQ7 的虚假中断。
+    // 这种情况只在 Bochs 出现过，而 QEMU 和 VirtualBox 则未能复现。
+    DEBUGK("isr_spurious_irq");
+
+    // TODO: 处理触发失败的 IRQ0
+
+    asm volatile("iret");
+}

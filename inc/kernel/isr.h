@@ -22,7 +22,8 @@ void isr_xm(void);
 void isr_ve(void);
 void isr_cp(void);
 void isr_reserved(void);
-void isr_timer(void);
-void isr_syscall(void);
 
 void isr_default(void);
+void isr_timer(void);
+void isr_syscall(void);
+void isr_spurious_irq(void);

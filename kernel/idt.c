@@ -58,6 +58,9 @@ void idt_init()
 
     // 设置时钟中断服务
     set_gate(IDT_PIC1_OFFSET, GT_INT, &isr_timer);
+    // 设置 IRQ7 和 IRQ15 的虚假中断处理
+    set_gate(IDT_PIC1_OFFSET + 7, GT_INT, &isr_spurious_irq);
+    set_gate(IDT_PIC2_OFFSET + 7, GT_INT, &isr_spurious_irq);
     
     // 设置系统调用中断
     set_gate(0x80, GT_INT, &isr_syscall);

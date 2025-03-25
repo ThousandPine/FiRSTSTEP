@@ -77,13 +77,26 @@ static void sys_exit(int exit_code)
 
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)
 {
+    /**
+     * 关于段寄存器与内存访问的说明：
+     * 
+     * 内核态下不强制要求 DS/ES 等数据段寄存器指向内核数据段的原因：
+     * 1. 内核与用户数据段均采用平坦模式，实际物理地址由分页机制管理，段选择子不影响线性地址计算。
+     * 2. 数据段寄存器仅需满足 CPL <= DPL，内核态（CPL=0）可合法加载 DPL=3 的用户数据段，
+     *    不会触发 #GP 异常。
+     * 3. 页表项的 U/S 位决定访问权限（U/S=0 仅 CPL<3 可访问），
+     *    只要 CS 为内核代码段（CPL=0），即可访问所有 U/S=0 的页面，
+     *    与当前数据段选择子无关。
+     * 
+     * 比较特殊的是 SS 寄存器：
+     *    SS 必须满足 CPL == SS.DPL，因此内核态必须使用 DPL=0 的数据段，
+     *    这也是 TSS 中 SS0 必须为内核数据段选择子的根本原因
+     */
+
     if (syscall_no >= NR_SYSCALL)
     {
         panic("syscall_no %d out of boundary %d", syscall_no, NR_SYSCALL);
     }
-
-    // 使用内核数据段
-    set_data_selector(KER_DATA_SELECTOR);
 
     // 调用对应系统调用函数，返回值保存在 eax 寄存器
     frame->eax = ((int(*)(uint32_t, uint32_t, uint32_t))syscall_table[syscall_no])(arg1, arg2, arg3);

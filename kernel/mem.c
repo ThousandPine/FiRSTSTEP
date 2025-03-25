@@ -127,6 +127,7 @@ int copy_page_dir_and_memory(page_dir_entry *dst_page_dir, const page_dir_entry 
         switch_page_dir(kernel_page_dir);
     }
 
+    memcpy(dst_page_dir, src_page_dir, PAGE_SIZE);
     for (uint32_t i = kernel_area_page_dir_end_index; i < 1024; i++)
     {
         if (!src_page_dir[i].present)
@@ -142,7 +143,7 @@ int copy_page_dir_and_memory(page_dir_entry *dst_page_dir, const page_dir_entry 
             DEBUGK("Failed to alloc page table");
             return -1;
         }
-        dst_page_dir[i] = src_page_dir[i];
+        memcpy(dst_page_table, src_page_table, PAGE_SIZE);
         dst_page_dir[i].addr = (uint32_t)dst_page_table >> 12;
 
         for (uint32_t j = 0; j < 1024; j++)
@@ -161,7 +162,6 @@ int copy_page_dir_and_memory(page_dir_entry *dst_page_dir, const page_dir_entry 
                 return -1;
             }
             memcpy((void *)dst_page_addr, (void *)src_page_addr, PAGE_SIZE);
-            dst_page_table[j] = src_page_table[j];
             dst_page_table[j].addr = dst_page_addr >> 12;
         }
     }

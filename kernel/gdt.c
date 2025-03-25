@@ -25,6 +25,20 @@ void set_tss(const tss_struct *tss)
     _tss = *tss;
 }
 
+void set_data_selector(uint16_t selector)
+{
+    asm volatile(
+        "mov %[data_seg], %%ax\n"
+        "mov %%ax, %%ds\n"
+        "mov %%ax, %%es\n"
+        "mov %%ax, %%fs\n"
+        "mov %%ax, %%gs\n"
+        "mov %%ax, %%ss\n"
+        :
+        : [data_seg] "r"(selector)
+        : "memory", "ax");
+}
+
 void gdt_init(void)
 {
     memset(_gdt, 0, sizeof(*_gdt));                                                // NULL Segment

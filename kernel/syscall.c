@@ -82,6 +82,9 @@ void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t
         panic("syscall_no %d out of boundary %d", syscall_no, NR_SYSCALL);
     }
 
+    // 使用内核数据段
+    set_data_selector(KER_DATA_SELECTOR);
+
     // 调用对应系统调用函数，返回值保存在 eax 寄存器
     frame->eax = ((int(*)(uint32_t, uint32_t, uint32_t))syscall_table[syscall_no])(arg1, arg2, arg3);
 }

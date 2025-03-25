@@ -25,6 +25,8 @@ void start_timer(void)
 void timer_handler(interrupt_frame *frame)
 {
     DEBUGK("timer interrupt");
+    // 使用内核数据段
+    set_data_selector(KER_DATA_SELECTOR);
     
     // 切换任务前，需要发送 EOI 通知时钟中断处理完毕，否则无法开始下一次时钟中断
     pic_send_eoi(0);

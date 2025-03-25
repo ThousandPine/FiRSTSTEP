@@ -91,3 +91,4 @@ typedef struct tss_struct
 
 void gdt_init(void);
 void set_tss(const tss_struct *tss);
+void set_data_selector(uint16_t selector);

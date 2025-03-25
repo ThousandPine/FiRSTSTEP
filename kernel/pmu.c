@@ -101,7 +101,7 @@ static void pmu_add_record(uint32_t addr, size_t count)
     assert(p_next == NULL || addr + count * PAGE_SIZE <= p_next->addr);
 
     // 判断能否与后一节点合并
-    if (p_pre != NULL && p_pre->addr + p_pre->count * PAGE_SIZE == addr)
+    if (p_next != NULL && addr + PAGE_SIZE == p_next->addr)
     {
         // 合并到后一节点记录中
         p_next->addr = addr;

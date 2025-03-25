@@ -150,13 +150,27 @@ int tty_write(const char *buf, size_t n)
     }
 
     // 光标在屏幕外时滚屏
-    while (tty.cursor >= tty.screen + WIDTH * HIGHT)
+    if (tty.cursor >= tty.screen + WIDTH * HIGHT)
     {
+        // 向上滚屏一行
         tty.screen += WIDTH;
+        // 确保不会超出显存范围
+        if (tty.screen + WIDTH * HIGHT > (tty.vmem_base + tty.vmem_size) >> 1)
+        {
+            tty.screen = tty.vmem_base >> 1;
+            tty.cursor = tty.vmem_base >> 1;
+            reset_vmem();
+        }
     }
-    while (tty.cursor < tty.screen)
+    else if (tty.cursor < tty.screen)
     {
+        // 向下滚屏一行
         tty.screen -= WIDTH;
+        // 确保不会低于显存基址
+        if (tty.screen < tty.vmem_base >> 1)
+        {
+            tty.screen = tty.vmem_base >> 1;
+        }
     }
 
     set_cursor();

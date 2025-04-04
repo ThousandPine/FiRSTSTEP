@@ -19,8 +19,10 @@ typedef struct interrupt_frame
 {
     // 主动压栈部分
     uint32_t gs, fs, es, ds;
-    uint32_t edi, esi, ebp, esp_useless, ebx, edx, ecx, eax; // PUSHA
+    // PUSHA
+    uint32_t edi, esi, ebp, esp_useless, ebx, edx, ecx, eax;
     // 中断压栈部分（忽略错误码）
+    // 触发跨权限级中断调用时 esp 和 ss 才会被压栈
     uint32_t eip, cs, eflags, esp, ss;
 } __attribute__((packed)) interrupt_frame;
 
@@ -58,3 +60,4 @@ typedef union task_union
 task_struct* create_task_from_elf(const char *file_path, task_struct *parent);
 task_struct* fork_task(task_struct *parent);
 void task_exit(task_struct *task, int exit_code);
+void task_dead(task_struct *task);

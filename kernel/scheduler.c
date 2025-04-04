@@ -13,6 +13,33 @@ static task_struct *current_task = NULL;
 static task_list ready_tasks = {NULL, NULL};
 static task_list blocked_tasks = {NULL, NULL};
 
+/**
+ * 切换到任务执行上下文
+ */
+static void context_switch_to(task_struct *task)
+{
+    DEBUGK("switch to task %d", task->pid);
+
+    // 切换 TSS
+    set_tss(&task->tss);
+    // 切换页目录
+    switch_page_dir(task->page_dir);
+    // 切换上下文
+    asm volatile(
+        // 定位中断栈帧
+        "mov %0, %%esp\n"
+        // 恢复上下文
+        "pop %%gs\n"
+        "pop %%fs\n"
+        "pop %%es\n"
+        "pop %%ds\n"
+        "popa\n"
+        "iret"
+        :
+        : "r"(task->interrupt_frame)
+        : "memory");
+}
+
 static void task_list_add(task_list *list, task_struct *task)
 {
     task->prev = task->next = NULL;
@@ -77,7 +104,7 @@ static void switch_to_running_state(task_struct *task)
     case TASK_READY:
         task_list_remove(&ready_tasks, task);
         break;
-    
+
     default:
         panic("invalid task state %d switch to running state", task->state);
         break;
@@ -88,8 +115,11 @@ static void switch_to_running_state(task_struct *task)
     {
         switch_task_state(running_task(), TASK_READY);
     }
+
+    // 执行任务
     task->state = TASK_RUNNING;
     current_task = task;
+    context_switch_to(task);
 }
 
 static void switch_to_ready_state(task_struct *task)
@@ -101,7 +131,7 @@ static void switch_to_ready_state(task_struct *task)
     case TASK_RUNNING:
         current_task = NULL;
         break;
-    
+
     default:
         panic("invalid task state %d switch to ready state", task->state);
         break;
@@ -118,13 +148,29 @@ static void switch_to_zombie_state(task_struct *task)
     case TASK_RUNNING:
         current_task = NULL;
         break;
-    
+
     default:
         panic("invalid task state %d switch to zombie state", task->state);
         break;
     }
 
     task->state = TASK_ZOMBIE;
+}
+
+static void switch_to_dead_state(task_struct *task)
+{
+    switch (task->state)
+    {
+    case TASK_ZOMBIE:
+        break;
+
+    default:
+        panic("invalid task state %d switch to dead state", task->state);
+        break;
+    }
+
+    task->state = TASK_DEAD;
+    task_dead(task);
 }
 
 void switch_task_state(task_struct *task, enum task_state state)
@@ -145,39 +191,15 @@ void switch_task_state(task_struct *task, enum task_state state)
     case TASK_ZOMBIE:
         switch_to_zombie_state(task);
         break;
+    case TASK_DEAD:
+        switch_to_dead_state(task);
+        break;
     default:
         panic("invalid task state %d to switch", state);
     }
 }
 
-/**
- * 切换到任务执行上下文
- */
-static void context_switch_to(task_struct *task)
-{
-    DEBUGK("switch to task %d", task->pid);
-
-    // 切换 TSS
-    set_tss(&task->tss);
-    // 切换页目录
-    switch_page_dir(task->page_dir);
-    // 切换上下文
-    asm volatile(
-        // 定位中断栈帧
-        "mov %0, %%esp\n"
-        // 恢复上下文
-        "pop %%gs\n"
-        "pop %%fs\n"
-        "pop %%es\n"
-        "pop %%ds\n"
-        "popa\n"
-        "iret"
-        :
-        : "r"(task->interrupt_frame)
-        : "memory");
-}
-
-void schedule(interrupt_frame *frame)
+void schedule_handler(interrupt_frame *frame)
 {
     // 保存当前任务的中断栈帧
     if (current_task != NULL)
@@ -194,7 +216,6 @@ void schedule(interrupt_frame *frame)
 
     // 切换到下一个任务
     switch_task_state(next_task, TASK_RUNNING);
-    context_switch_to(next_task);
 }
 
 void scheduler_init(task_struct *init_task)
@@ -203,4 +224,10 @@ void scheduler_init(task_struct *init_task)
     switch_task_state(init_task, TASK_READY);
     // 启用时钟中断
     start_timer();
+
+    // 让 CPU 进入休眠状态，等待时钟中断
+    while (1)
+    {
+        asm volatile("hlt");
+    }
 }

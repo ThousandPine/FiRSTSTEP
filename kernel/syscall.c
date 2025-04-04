@@ -69,10 +69,52 @@ static void sys_exit(int exit_code)
     task_exit(task, exit_code);
     
     // 切换到下一个任务
-    schedule(NULL);
+    // 不需要传入 frame，因为该任务不会重新执行
+    schedule_handler(NULL);
 
     // 防止返回
     panic("sys_exit: no task to switch");
+}
+
+pid_t sys_wait(int *status)
+{
+    task_struct *task = running_task();
+    if (task == NULL)
+    {
+        panic("running_task is NULL, wait failed");
+        return -1;
+    }
+
+    // 如果没有子进程，则返回 -1
+    task_struct *child = task->child;
+    if (child == NULL)
+    {
+        return -1;
+    }
+
+    // 等待子进程结束
+    while (child->state != TASK_ZOMBIE)
+    {
+        // 调度其他任务
+        schedule();
+    }
+
+    // 记录返回值
+    pid_t pid = child->pid;
+    *status = child->exit_code;
+    
+    // 从父进程的子进程链表中删除
+    task->child = child->sibling;
+
+    // 回收子进程的 PCB
+    switch_task_state(child, TASK_DEAD);
+    
+    return pid;
+}
+
+static pid_t sys_waitpid(pid_t pid, int *status, int options)
+{
+    // TODO: 实现 waitpid
 }
 
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)
@@ -113,4 +155,6 @@ void syscall_init(void)
     syscall_table[SYS_NR_FORK] = sys_fork;
     syscall_table[SYS_NR_GETPID] = sys_getpid;
     syscall_table[SYS_NR_EXIT] = sys_exit;
+    syscall_table[SYS_NR_WAIT] = sys_wait;
+    syscall_table[SYS_NR_WAITPID] = sys_waitpid;
 }

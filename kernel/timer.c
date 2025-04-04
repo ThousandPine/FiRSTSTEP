@@ -29,5 +29,5 @@ void timer_handler(interrupt_frame *frame)
     // 切换任务前，需要发送 EOI 通知时钟中断处理完毕，否则无法开始下一次时钟中断
     pic_send_eoi(0);
     // 执行调度切换任务
-    schedule(frame);
+    schedule_handler(frame);
 }

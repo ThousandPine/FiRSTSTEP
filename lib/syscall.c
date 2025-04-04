@@ -41,3 +41,11 @@ void exit(int status)
 {
     syscall(SYS_NR_EXIT, status);
 }
+pid_t wait(int *status)
+{
+    return syscall(SYS_NR_WAIT, status);
+}
+pid_t waitpid(pid_t pid, int *status, int options)
+{
+    return syscall(SYS_NR_WAITPID, pid, status, options);
+}

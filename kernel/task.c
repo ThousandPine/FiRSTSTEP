@@ -164,7 +164,7 @@ task_struct* fork_task(task_struct *parent)
 /**
  * 
  * NOTE: 进程退出时不会立刻释放所有资源，而是会保留进程结构体，用于记录退出状态。
- *       直到父进程调用 waitpid() 获取子进程的退出状态，资源才会被完全回收。
+ *       直到父进程调用 wait() 或 waitpid() 获取子进程的退出状态，资源才会被完全回收。
  *       这种已经退出但资源还未被回收的进程，被称为“僵尸进程”
  */
 void task_exit(task_struct *task, int exit_code)
@@ -189,8 +189,14 @@ void task_exit(task_struct *task, int exit_code)
         last_child->sibling = init_task->child;
         init_task->child = task->child;
     }
+}
 
-    // TODO: 恢复父进程 waitpid 的阻塞
+void task_dead(task_struct *task)
+{
+    assert(task != NULL);
+
+    // 释放 task_union
+    set_free_task_union((task_union *)task);
 }
 
 void task_init(void)

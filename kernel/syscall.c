@@ -4,6 +4,7 @@
 #include "kernel/tty.h"
 #include "kernel/scheduler.h"
 #include "kernel/task.h"
+#include "waitflags.h"
 #include "stdio.h"
 
 static void* syscall_table[NR_SYSCALL];
@@ -32,11 +33,7 @@ static int sys_write(uint32_t fd, const void *buf, uint32_t count)
 
 static int sys_fork(void)
 {
-    task_struct *new_task = fork_task(running_task());
-    if (new_task == NULL)
-    {
-        return -1;
-    }
+    task_struct *new_task = fork_task(running_task(1));
 
     // 新进程的 fork() 返回值是 0
     new_task->interrupt_frame->eax = 0;
@@ -49,17 +46,12 @@ static int sys_fork(void)
 
 static pid_t sys_getpid(void)
 {
-    return running_task()->pid;
+    return running_task(1)->pid;
 }
 
 static void sys_exit(int exit_code)
 {
-    task_struct *task = running_task();
-    if (task == NULL)
-    {
-        panic("running_task is NULL, exit failed");
-        return;
-    }
+    task_struct *task = running_task(1);
 
     DEBUGK("sys_exit: task %d exit_code %d", task->pid, exit_code);
 
@@ -78,23 +70,32 @@ static void sys_exit(int exit_code)
 
 pid_t sys_wait(int *status)
 {
-    task_struct *task = running_task();
-    if (task == NULL)
-    {
-        panic("running_task is NULL, wait failed");
-        return -1;
-    }
+    task_struct *task = running_task(1);
 
     // 如果没有子进程，则返回 -1
-    task_struct *child = task->child;
-    if (child == NULL)
+    if (task->child == NULL)
     {
         return -1;
     }
-
+    
     // 等待子进程结束
-    while (child->state != TASK_ZOMBIE)
+    task_struct *child = NULL;
+    while (1)
     {
+        for (task_struct *p = task->child; p != NULL; p = p->sibling)
+        {
+            if (p->state == TASK_ZOMBIE)
+            {
+                child = p;
+                break;
+            }
+        }
+
+        if (child != NULL)
+        {
+            break;
+        }
+
         // 调度其他任务
         schedule();
     }
@@ -114,7 +115,95 @@ pid_t sys_wait(int *status)
 
 static pid_t sys_waitpid(pid_t pid, int *status, int options)
 {
-    // TODO: 实现 waitpid
+    task_struct *task = running_task(1);
+
+    // 如果没有子进程，则返回 -1
+    if (task->child == NULL)
+    {
+        return -1;
+    }
+
+    task_struct *child = NULL;
+
+    // 小于 -1 的 pid 取绝对值
+    pid = pid < -1 ? -pid : pid;
+
+    // 等待同组进程结束（暂不支持，需要 gpid 字段）
+    if (pid == 0)
+    {
+        panic("sys_waitpid: not supported pid == 0");
+    }
+    // 等待任意进程结束
+    else if (pid == -1)
+    {
+        while (1)
+        {
+            for (task_struct *p = task->child; p != NULL; p = p->sibling)
+            {
+                if (p->state == TASK_ZOMBIE)
+                {
+                    child = p;
+                    break;
+                }
+            }
+            if (child != NULL)
+            {
+                break;
+            }
+            // 非阻塞等待，返回 0
+            if (options & WNOHANG)
+            {
+                return 0;
+            }
+            // 调度其他任务
+            schedule();
+        }
+    }
+    // 等待指定进程结束
+    else if (pid > 0)
+    {
+        for (task_struct *p = task->child; p != NULL; p = p->sibling)
+        {
+            if (p->pid == pid)
+            {
+                child = p;
+                break;
+            }
+        }
+        // 如果没有找到指定进程，则返回 -1
+        if (child == NULL)
+        {
+            return -1;
+        }
+        // 非阻塞等待，返回 0
+        if ((options & WNOHANG) && child->state != TASK_ZOMBIE)
+        {
+            return 0;
+        }
+        // 阻塞等待
+        while(child->state != TASK_ZOMBIE)
+        {
+            // 调度其他任务
+            schedule();
+        }
+    }
+
+    if (child == NULL)
+    {
+        return -1;
+    }
+
+    // 记录返回值
+    pid = child->pid;
+    *status = child->exit_code;
+    
+    // 从父进程的子进程链表中删除
+    task->child = child->sibling;
+
+    // 回收子进程的 PCB
+    switch_task_state(child, TASK_DEAD);
+    
+    return pid;
 }
 
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)

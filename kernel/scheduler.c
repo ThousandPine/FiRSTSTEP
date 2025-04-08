@@ -92,8 +92,9 @@ static task_struct *get_next_ready_task(void)
     return ready_tasks.head;
 }
 
-task_struct *running_task(void)
+task_struct *running_task(uint8_t not_null)
 {
+    assert(not_null == 0 || current_task != NULL);
     return current_task;
 }
 
@@ -111,9 +112,9 @@ static void switch_to_running_state(task_struct *task)
     }
 
     // 将正在执行的任务状态设为 READY
-    if (running_task() != NULL)
+    if (running_task(0) != NULL)
     {
-        switch_task_state(running_task(), TASK_READY);
+        switch_task_state(running_task(1), TASK_READY);
     }
 
     // 执行任务

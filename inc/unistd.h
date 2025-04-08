@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "waitflags.h"
 
 int syscall(int syscall_no, ...);
 int write(int fd, const void *buf, int count);

@@ -200,6 +200,11 @@ void switch_task_state(task_struct *task, enum task_state state)
     }
 }
 
+/**
+ * 调度下一个任务
+ * 
+ * NOTE: 则该函数不会返回
+ */
 void schedule_handler(interrupt_frame *frame)
 {
     // 保存当前任务的中断栈帧
@@ -212,7 +217,8 @@ void schedule_handler(interrupt_frame *frame)
     task_struct *next_task = get_next_ready_task();
     if (next_task == NULL)
     {
-        return;
+        // 未找到任务，则继续调度当前任务
+        context_switch_to(running_task(1));
     }
 
     // 切换到下一个任务

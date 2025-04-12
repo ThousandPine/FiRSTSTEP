@@ -27,6 +27,7 @@ static task_union* get_free_task_union(void)
 
 static int set_free_task_union(task_union *ptr)
 {
+    // FIXME: 可以不用循环查找，而是直接通过地址计算出索引
     for (int i = 0; i < NR_TASKS; i++)
     {
         if (ptr == &task_unions[i])
@@ -44,7 +45,28 @@ static int set_free_task_union(task_union *ptr)
     return -1;
 }
 
-static task_struct* create_task(uint32_t entry, page_dir_entry *page_dir, task_struct *parent, uint32_t code_selector, uint32_t data_selector)
+static void init_task_stack(task_union *task_union, uint32_t entry)
+{
+    // 初始化进程用户态栈
+    uint32_t stack_page = pmu_alloc();
+    uint32_t maped_usr_stack_top = PAGE_SIZE + map_physical_page(task_union->task.page_dir, stack_page, 1, 1);
+    // 初始化中断栈帧，模拟中断调用
+    // NOTE: 不能将中断栈帧指向 kernel_stack 的开始处，
+    //       因为这是一个 union，修改 kernel_stack 前面的部分会覆盖 task 结构体
+    task_union->task.interrupt_frame = (interrupt_frame *)(task_union->kernel_stack + PAGE_SIZE - sizeof(interrupt_frame));
+    memset(task_union->task.interrupt_frame, 0, sizeof(interrupt_frame));
+    task_union->task.interrupt_frame->ss = USER_DATA_SELECTOR;
+    task_union->task.interrupt_frame->esp = maped_usr_stack_top;
+    task_union->task.interrupt_frame->eflags = get_eflags();
+    task_union->task.interrupt_frame->cs = USER_CODE_SELECTOR;
+    task_union->task.interrupt_frame->eip = entry;
+    task_union->task.interrupt_frame->es = USER_DATA_SELECTOR;
+    task_union->task.interrupt_frame->ds = USER_DATA_SELECTOR;
+    task_union->task.interrupt_frame->fs = USER_DATA_SELECTOR;
+    task_union->task.interrupt_frame->gs = USER_DATA_SELECTOR;
+}
+
+static task_struct* create_task(uint32_t entry, page_dir_entry *page_dir, task_struct *parent)
 {
     assert(page_dir != NULL);
 
@@ -74,23 +96,8 @@ static task_struct* create_task(uint32_t entry, page_dir_entry *page_dir, task_s
     task_union->task.tss.esp0 = (uint32_t)&task_union->kernel_stack[PAGE_SIZE];
     // 初始化进程页目录
     task_union->task.page_dir = page_dir;
-    // 初始化进程用户态栈
-    uint32_t stack_page = pmu_alloc();
-    uint32_t maped_usr_stack_top = PAGE_SIZE + map_physical_page(task_union->task.page_dir, stack_page, 1, 1);
-    // 初始化中断栈帧，模拟中断调用
-    // NOTE: 不能将中断栈帧指向 kernel_stack 的开始处，
-    //       因为这是一个 union，修改 kernel_stack 前面的部分会覆盖 task 结构体
-    task_union->task.interrupt_frame = (interrupt_frame *)(task_union->kernel_stack + PAGE_SIZE - sizeof(interrupt_frame));
-    memset(task_union->task.interrupt_frame, 0, sizeof(interrupt_frame));
-    task_union->task.interrupt_frame->ss = data_selector;
-    task_union->task.interrupt_frame->esp = maped_usr_stack_top;
-    task_union->task.interrupt_frame->eflags = get_eflags();
-    task_union->task.interrupt_frame->cs = code_selector;
-    task_union->task.interrupt_frame->eip = entry;
-    task_union->task.interrupt_frame->es = data_selector;
-    task_union->task.interrupt_frame->ds = data_selector;
-    task_union->task.interrupt_frame->fs = data_selector;
-    task_union->task.interrupt_frame->gs = data_selector;
+    // 初始化进程用户态栈和中断栈帧
+    init_task_stack(task_union, entry);
 
     return &task_union->task;
 }
@@ -98,8 +105,9 @@ static task_struct* create_task(uint32_t entry, page_dir_entry *page_dir, task_s
 /**
  * 释放申请的内存资源
  * 
- * 由于程序使用的内存页也都映射到了页表中
+ * 由于程序使用的内存页都映射到了页目录中
  * 所以只要释放整个页目录映射的内存与页目录本身
+ * 不需要额外释放栈页
  */
 static void free_task_alloced_memory(task_struct *task)
 {
@@ -124,7 +132,7 @@ task_struct* create_task_from_elf(const char *file_path, task_struct *parent)
     }
     
     // 创建进程
-    task_struct* task = create_task(entry, page_dir, parent, USER_CODE_SELECTOR, USER_DATA_SELECTOR);
+    task_struct* task = create_task(entry, page_dir, parent);
     if (task == NULL)
     {
         free_user_page_dir(page_dir);
@@ -132,6 +140,33 @@ task_struct* create_task_from_elf(const char *file_path, task_struct *parent)
     }
 
     return task;
+}
+
+int reload_task_from_elf(const char *file_path, task_struct *task)
+{
+    assert(task != NULL);
+    assert(file_path != NULL);
+
+    // 新建页目录
+    page_dir_entry* page_dir = create_user_page_dir();
+
+    // 加载 ELF 文件，读取程序数据到内存，并获取程序入口
+    uint32_t entry = elf_loader(page_dir, file_path);
+    if (entry == 0)
+    {
+        DEBUGK("load ELF file failed");
+        free_user_page_dir(page_dir);
+        return -1;
+    }
+
+    // 释放原有的页目录
+    free_user_page_dir(task->page_dir);
+    task->page_dir = page_dir;
+
+    // 重置栈和中断栈帧，设置任务返回地址
+    init_task_stack((task_union *)task, entry);
+
+    return 0;
 }
 
 task_struct* fork_task(task_struct *parent)
@@ -148,7 +183,7 @@ task_struct* fork_task(task_struct *parent)
     }
     
     // 创建新任务
-    task_struct* new_task = create_task(0, page_dir, parent, USER_CODE_SELECTOR, USER_DATA_SELECTOR);
+    task_struct* new_task = create_task(0, page_dir, parent);
     if (new_task == NULL)
     {
         free_user_page_dir(page_dir);
@@ -169,7 +204,8 @@ task_struct* fork_task(task_struct *parent)
  */
 void task_exit(task_struct *task, int exit_code)
 {
-    assert(task != NULL && task != init_task);
+    assert(task != NULL)
+    assert(task != init_task);
 
     task->exit_code = exit_code;
     

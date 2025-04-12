@@ -92,9 +92,12 @@ static task_struct *get_next_ready_task(void)
     return ready_tasks.head;
 }
 
-task_struct *running_task(uint8_t not_null)
+task_struct *running_task(uint8_t check_null)
 {
-    assert(not_null == 0 || current_task != NULL);
+    if (check_null)
+    {
+        assert(current_task != NULL);
+    }
     return current_task;
 }
 

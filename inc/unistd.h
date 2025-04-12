@@ -10,3 +10,4 @@ pid_t getpid(void);
 void exit(int status);
 pid_t wait(int *status);
 pid_t waitpid(pid_t pid, int *status, int options);
+int execl(const char *path, const char *arg0, ...);

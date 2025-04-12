@@ -7,5 +7,6 @@
 #define SYS_NR_EXIT 4
 #define SYS_NR_WAIT 5
 #define SYS_NR_WAITPID 6
+#define SYS_NR_EXECL 7
 
-#define NR_SYSCALL 7
+#define NR_SYSCALL 8

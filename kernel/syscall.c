@@ -68,7 +68,7 @@ static void sys_exit(int exit_code)
     panic("sys_exit: no task to switch");
 }
 
-pid_t sys_wait(int *status)
+static pid_t sys_wait(int *status)
 {
     task_struct *task = running_task(1);
 
@@ -206,6 +206,24 @@ static pid_t sys_waitpid(pid_t pid, int *status, int options)
     return pid;
 }
 
+static int sys_execl(const char *file_path, va_list args)
+{
+    struct task_struct *task = running_task(1);
+
+    // 从 ELF 文件重新加载进程数据到内存
+    if (reload_task_from_elf(file_path, task) == -1)
+    {
+        return -1;
+    }
+
+    // 重新加载页目录
+    // 也可以使用 schedule() 函数
+    // 通过调度器的上下文切换加载页目录
+    switch_page_dir(task->page_dir);
+
+    return 0;
+}
+
 void syscall_handler(uint32_t syscall_no, uint32_t arg1, uint32_t arg2, uint32_t arg3, interrupt_frame *frame)
 {
     /**
@@ -246,4 +264,5 @@ void syscall_init(void)
     syscall_table[SYS_NR_EXIT] = sys_exit;
     syscall_table[SYS_NR_WAIT] = sys_wait;
     syscall_table[SYS_NR_WAITPID] = sys_waitpid;
+    syscall_table[SYS_NR_EXECL] = sys_execl;
 }

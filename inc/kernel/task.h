@@ -58,6 +58,7 @@ typedef union task_union
 } task_union;
 
 task_struct* create_task_from_elf(const char *file_path, task_struct *parent);
+int reload_task_from_elf(const char *file_path, task_struct *task);
 task_struct* fork_task(task_struct *parent);
 void task_exit(task_struct *task, int exit_code);
 void task_dead(task_struct *task);

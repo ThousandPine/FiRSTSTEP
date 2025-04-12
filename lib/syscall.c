@@ -49,3 +49,21 @@ pid_t waitpid(pid_t pid, int *status, int options)
 {
     return syscall(SYS_NR_WAITPID, pid, status, options);
 }
+
+/**
+ * @param path 可执行文件绝对路径
+ * @param arg0 参数列表特地声明 arg0 是因为要保证至少有一个参数，即末尾的 NULL
+ * @param ... 可变参数列表，最后一个参数必须是 NULL
+ */
+int execl(const char *path, const char *arg0, ...)
+{
+    va_list args;
+    // 以 path 为基准，这样 va_list 就可以从 arg0 开始
+    va_start(args, path);
+
+    int ret = syscall(SYS_NR_EXECL, path, args);
+    
+    va_end(args);
+    
+    return ret;
+}

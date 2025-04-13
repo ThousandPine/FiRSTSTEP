@@ -205,7 +205,11 @@ task_struct* fork_task(task_struct *parent)
 void task_exit(task_struct *task, int exit_code)
 {
     assert(task != NULL)
-    assert(task != init_task);
+
+    if (task == init_task)
+    {
+        panic("init task exit");
+    }
 
     task->exit_code = exit_code;
     

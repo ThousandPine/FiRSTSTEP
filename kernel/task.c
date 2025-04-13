@@ -238,7 +238,12 @@ void task_dead(task_struct *task)
 void task_init(void)
 {
     // 创建首个任务
-    init_task = create_task_from_elf("/init.exe", NULL);
+    init_task = create_task_from_elf("/bin/init", NULL);
+
+    if (init_task == NULL)
+    {
+        panic("create init task failed");
+    }
     
     // 初始化调度器
     scheduler_init(init_task);

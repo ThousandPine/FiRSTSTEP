@@ -1,5 +1,4 @@
 OBJDIR := ../obj/usr
-TARGET := $(OBJDIR)/init.exe
 LIBDIR := ../lib
 LIBNAME := libmylib.a
 
@@ -33,13 +32,16 @@ LDFLAGS += -e _start			# 指定程序入口为 _start
 LDFLAGS := $(strip ${LDFLAGS})
 
 
-SRC_S := $(wildcard *.S)                # 当前目录下所有的 .S 源文件
-SRC_C := $(wildcard *.c)                # 当前目录下所有的 .c 源文件
-OBJ := $(SRC_S:%.S=$(OBJDIR)/%.o)		# 将 SRC 中的 .S 文件扩展名替换为 .o，生成目标文件列表 OBJ
-OBJ += $(SRC_C:%.c=$(OBJDIR)/%.o)		# 将 SRC 中的 .c 文件扩展名替换为 .o，生成目标文件列表 OBJ
-DEPS := $(OBJ:%.o=$(OBJDIR)/%.d)      	# 为 .o 文件生成依赖文件 .d，依赖文件存放在 $(OBJDIR) 目录下
+CRT_SRC := $(wildcard crt*.S)									# 当前目录下所有的标准启动文件
+CRT_OBJ := $(CRT_SRC:%.S=$(OBJDIR)/%.o) 						# 将 CRT_SRC 中的 .S 文件扩展名替换为 .o
+SRC_C := $(wildcard *.c)                						# 当前目录下所有的 .c 源文件
+OBJ_C := $(SRC_C:%.c=$(OBJDIR)/%.o)								# 将 SRC 中的 .c 文件扩展名替换为 .o
+DEPS := $(CRT_OBJ:%.o=$(OBJDIR)/%.d) $(OBJ_C:%.o=$(OBJDIR)/%.d)	# 为 .o 文件生成依赖文件 .d
 
-all: $(TARGET)
+# 每个 .c 文件对应一个可执行文件，例如 foo.c -> ../obj/usr/foo
+TARGETS := $(patsubst %.c,$(OBJDIR)/%,$(SRC_C))
+
+all: $(TARGETS)
 
 $(OBJDIR)/%.o: %.S
 	@mkdir -p $(@D)
@@ -49,16 +51,16 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(TARGET): $(OBJ) $(LIBDIR)/$(LIBNAME)
+$(OBJDIR)/%: $(OBJDIR)/%.o $(CRT_OBJ) $(LIBDIR)/$(LIBNAME)
 # 链接用户程序
 # 此处将 $(LDFLAGS) 后置是为了让 -l 指定的库文件出现在 $(OBJ) 文件之后（右侧），否则会编译出错
 # 这与链接器从左到右依次解析符号的顺序有关，要让链接器先分析完 $(OBJ) 中缺失的符号，然后再从库文件链接需要的内容
-	$(LD) -o $@ $(OBJ) $(LDFLAGS)
-# 使用脚本安装程序到镜像文件分区
-	../install_to_image.sh $(IMG_PATH) $@
+	$(LD) -o $@ $< $(CRT_OBJ) $(LDFLAGS)
+# 使用脚本安装程序到镜像文件引导分区的 /bin/ 目录下
+	../install_to_image.sh $(IMG_PATH) $@ /bin/
 
 # 引用生成的 .d 依赖文件，使其能够判断头文件依赖
 -include $(DEPS)
 
 clean:
-	rm -rf $(TARGET) $(OBJDIR)
+	rm -rf $(TARGETS) $(OBJDIR)

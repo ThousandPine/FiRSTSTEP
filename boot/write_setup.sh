@@ -45,7 +45,7 @@ if [ $SECTOR_COUNT -eq 0 ]; then
     echo "Error: Invalid sector count calculated as 0. Check '$BIN_FILE' size."
     exit 1
 elif [ $SECTOR_COUNT -gt 46 ]; then
-    echo "Error: '$BIN_FILE' occupies too many sectors ($SECTOR_COUNT). Maximum is 54."
+    echo "Error: '$BIN_FILE' occupies too many sectors ($SECTOR_COUNT). Maximum is 46."
     exit 1
 fi
 

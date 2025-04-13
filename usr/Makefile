@@ -54,8 +54,8 @@ $(TARGET): $(OBJ) $(LIBDIR)/$(LIBNAME)
 # 此处将 $(LDFLAGS) 后置是为了让 -l 指定的库文件出现在 $(OBJ) 文件之后（右侧），否则会编译出错
 # 这与链接器从左到右依次解析符号的顺序有关，要让链接器先分析完 $(OBJ) 中缺失的符号，然后再从库文件链接需要的内容
 	$(LD) -o $@ $(OBJ) $(LDFLAGS)
-# 使用脚本安装用户文件到引导扇区根目录
-	./install_user.sh $@ $(IMG_PATH)
+# 使用脚本安装程序到镜像文件分区
+	../install_to_image.sh $(IMG_PATH) $@
 
 # 引用生成的 .d 依赖文件，使其能够判断头文件依赖
 -include $(DEPS)

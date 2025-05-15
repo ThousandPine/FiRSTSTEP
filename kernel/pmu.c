@@ -74,7 +74,7 @@ static void free_node(page_node *node)
 // 添加空闲页记录
 static void pmu_add_record(uint32_t addr, size_t count)
 {
-    DEBUGK("Add page free record: addr = %p, count = %u", addr, count);
+    // DEBUGK("Add page free record: addr = %p, count = %u", addr, count);
 
     assert(count != 0);          // 数量不得为 0
     assert(addr != 0);           // 地址不得为 0

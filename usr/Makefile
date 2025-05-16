@@ -51,6 +51,9 @@ $(OBJDIR)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+# 应用程序文件名和.o文件名都使用通配符的情况下
+# Makefile 会将.o文件当作中间文件来处理
+# 导致执行完成后.o文件被自动删除，如 rm ../obj/usr/init.o
 $(OBJDIR)/%: $(OBJDIR)/%.o $(CRT_OBJ) $(LIBDIR)/$(LIBNAME)
 # 链接用户程序
 # 此处将 $(LDFLAGS) 后置是为了让 -l 指定的库文件出现在 $(OBJ) 文件之后（右侧），否则会编译出错
@@ -61,6 +64,12 @@ $(OBJDIR)/%: $(OBJDIR)/%.o $(CRT_OBJ) $(LIBDIR)/$(LIBNAME)
 
 # 引用生成的 .d 依赖文件，使其能够判断头文件依赖
 -include $(DEPS)
+
+# 伪目标，避免 make 删除中间文件
+# 因为应用程序文件名和 .o 文件名都使用通配符的情况下
+# make 会将 .o 文件当作中间文件来处理
+# 导致执行完成后 .o 文件被自动删除，如 rm ../obj/usr/init.o
+.SECONDARY:
 
 clean:
 	rm -rf $(TARGETS) $(OBJDIR)
